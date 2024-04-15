@@ -5,6 +5,7 @@
 #include "performance.h"
 #include "basis.h"
 // #include "hnswlib.h"
+#include "maria.h"
 #include <iostream>
 #include <fstream>
 #include <cmath>
@@ -73,6 +74,90 @@ inline resOutput Alg0_mfalsh(mf_alsh::Hash& myslsh, float c_, int m_, int k_, in
 	res.ratio = ((float)perform.ratio) / (perform.res_num);
 	res.cost = ((float)perform.cost) / ((long long)perform.num * (long long)myslsh.N);
 	res.kRatio=perform.kRatio/perform.num;
+	//delete[] ltm;
+	return res;
+}
+
+inline resOutput Alg0_maria(maria& maria, float c_, int m_, int k_, int L_, int K_, Preprocess& prep)
+{
+	std::string query_result = ("results/MF_ALSH_result.csv");
+
+	lsh::timer timer;
+	std::cout << std::endl << "RUNNING QUERY ..." << std::endl;
+
+	int Qnum = 100;
+	lsh::progress_display pd(Qnum);
+	Performance<queryN> perform;
+	lsh::timer timer1;
+	for (int j = 0; j < Qnum; j++)
+	{
+		queryN query(j, c_, k_, prep, m_);
+		maria.knn(&query);
+		perform.update(query, prep);
+		++pd;
+	}
+
+	float mean_time = (float)perform.time_total / perform.num;
+	std::cout << "AVG QUERY TIME:    " << mean_time * 1000 << "ms." << std::endl << std::endl;
+	std::cout << "AVG RECALL:        " << ((float)perform.NN_num) / (perform.num * k_) << std::endl;
+	std::cout << "AVG RATIO:         " << ((float)perform.ratio) / (perform.res_num) << std::endl;
+
+	time_t now = time(0);
+	tm* ltm = new tm[1];
+	localtime_s(ltm, &now);
+
+	resOutput res;
+	res.algName = "Maria";
+	res.L = -1;
+	res.K = -1;
+	res.c = c_;
+	res.time = mean_time * 1000;
+	res.recall = ((float)perform.NN_num) / (perform.num * k_);
+	res.ratio = ((float)perform.ratio) / (perform.res_num);
+	res.cost = ((float)perform.cost) / ((long long)perform.num * (long long)maria.N);
+	res.kRatio = perform.kRatio / perform.num;
+	//delete[] ltm;
+	return res;
+}
+
+inline resOutput Alg0_HNSW(myHNSW& hnsw, float c_, int m_, int k_, int L_, int K_, Preprocess& prep)
+{
+	std::string query_result = ("results/MF_ALSH_result.csv");
+
+	lsh::timer timer;
+	std::cout << std::endl << "RUNNING QUERY ..." << std::endl;
+
+	int Qnum = 100;
+	lsh::progress_display pd(Qnum);
+	Performance<queryN> perform;
+	lsh::timer timer1;
+	for (int j = 0; j < Qnum; j++)
+	{
+		queryN query(j, c_, k_, prep, m_);
+		hnsw.knn(&query);
+		perform.update(query, prep);
+		++pd;
+	}
+
+	float mean_time = (float)perform.time_total / perform.num;
+	std::cout << "AVG QUERY TIME:    " << mean_time * 1000 << "ms." << std::endl << std::endl;
+	std::cout << "AVG RECALL:        " << ((float)perform.NN_num) / (perform.num * k_) << std::endl;
+	std::cout << "AVG RATIO:         " << ((float)perform.ratio) / (perform.res_num) << std::endl;
+
+	time_t now = time(0);
+	tm* ltm = new tm[1];
+	localtime_s(ltm, &now);
+
+	resOutput res;
+	res.algName = "HNSW";
+	res.L = -1;
+	res.K = -1;
+	res.c = c_;
+	res.time = mean_time * 1000;
+	res.recall = ((float)perform.NN_num) / (perform.num * k_);
+	res.ratio = ((float)perform.ratio) / (perform.res_num);
+	res.cost = ((float)perform.cost) / ((long long)perform.num * (long long)hnsw.N);
+	res.kRatio = perform.kRatio / perform.num;
 	//delete[] ltm;
 	return res;
 }

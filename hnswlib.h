@@ -57,6 +57,8 @@ namespace hnswlib {
     template<typename MTYPE>
     using DISTFUNC = MTYPE(*)(const void *, const void *, const void *);
 
+    //template<typename MTYPE>
+    //using DISTFUNC = MTYPE(*)(float*, float*, int);
 
     template<typename MTYPE>
     class SpaceInterface {
@@ -87,7 +89,59 @@ namespace hnswlib {
 
 }
 
-// #include "space_l2.h"
-// #include "space_ip.h"
+template<typename MTYPE>
+using DISTFUNC = MTYPE(*)(const void*, const void*, const void*);
+//using namespace hnswlib;
+
+#include "basis.h"
+
+static float cal_inner_product_hnsw(const void* pVect1v, const void* pVect2v, const void* qty_ptr) {
+    //++cost;
+    float* pVect1 = (float*)pVect1v;
+    float* pVect2 = (float*)pVect2v;
+    size_t qty = *((size_t*)qty_ptr);
+
+    return 1.0f - cal_inner_product(pVect1, pVect2, qty);
+}
+
+class IpSpace : public hnswlib::SpaceInterface<float> {
+
+    DISTFUNC<float> fstdistfunc_ = cal_inner_product_hnsw;
+    size_t data_size_;
+    size_t dim_;
+public:
+    IpSpace(size_t dim) {
+        fstdistfunc_ = cal_inner_product_hnsw;
+//#if defined(USE_SSE) || defined(USE_AVX)
+//        if (dim % 16 == 0)
+//            fstdistfunc_ = L2SqrSIMD16Ext;
+//        else if (dim % 4 == 0)
+//            fstdistfunc_ = L2SqrSIMD4Ext;
+//        else if (dim > 16)
+//            fstdistfunc_ = L2SqrSIMD16ExtResiduals;
+//        else if (dim > 4)
+//            fstdistfunc_ = L2SqrSIMD4ExtResiduals;
+//#endif
+        dim_ = dim;
+        data_size_ = dim * sizeof(float);
+    }
+
+    size_t get_data_size() {
+        return data_size_;
+    }
+
+    hnswlib::DISTFUNC<float> get_dist_func() {
+        return reinterpret_cast<hnswlib::DISTFUNC<float>>(fstdistfunc_);
+    }
+
+    void* get_dist_func_param() {
+        return &dim_;
+    }
+
+    ~IpSpace() {}
+};
+
+//#include "space_l2.h"
+//#include "space_ip.h"
 // #include "bruteforce.h"
 #include "hnswalg.h"

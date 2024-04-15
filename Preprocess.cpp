@@ -50,7 +50,7 @@ void Preprocess::load_data(const std::string& path)
 
 	data.val = new float* [data.N];
 	for (int i = 0; i < data.N; ++i) {
-		data.val[i] = new float[data.dim];
+		data.val[i] = new float[data.dim + 1];
 		in.read((char*)data.val[i], sizeof(float) * header[2]);
 	}
 

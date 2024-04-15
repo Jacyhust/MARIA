@@ -1,3 +1,242 @@
 #pragma once
 #include "hnswlib.h"
+#include <mutex>
+#include <algorithm>
+using hnsw = hnswlib::HierarchicalNSW<float>;
+extern std::unique_lock<std::mutex>* glock;
 
+class maria
+{
+private:
+	std::string index_file;
+
+public:
+	int N;
+	int dim;
+	// Number of hash functions
+	int S;
+	//#L Tables; 
+	int L;
+	// Dimension of the hash table
+	int K;
+
+	//float** hashval;
+	Partition parti;
+	Preprocess* prep = nullptr;
+	IpSpace* ips = nullptr;
+	hnsw** apgs = nullptr;
+	//HashParam hashpar;
+	//std::vector<int>*** myIndexes;
+
+	//float tmin;
+	//float tstep;
+	//float smin;
+	//float sstep;
+	//int rows;
+	//int cols;
+	//float** phi;
+
+	//void load_funtable(const std::string& file);
+public:
+	maria(Preprocess& prep_, Parameter& param_, const std::string& file, Partition& part_, const std::string& funtable) :parti(part_) {
+		N = param_.N;
+		dim = param_.dim + 1;
+		L = param_.L;
+		K = param_.K;
+		S = param_.S;
+		prep=&prep_; 
+		GetHash();
+		buildIndex();
+	}
+
+	void buildIndex() {
+		int M = 24;
+		int ef = 40;
+		ips = new IpSpace(dim);
+		apgs = new hnsw* [parti.num_chunk];
+		size_t report_every = N / 20;
+		if (report_every > 1e5) report_every = 1e5;
+
+		int j1 = 0;
+		for (int i = 0; i < parti.num_chunk; ++i) {
+			apgs[i] = new hnsw(ips, parti.nums[i], M, ef);
+			auto& appr_alg = apgs[i];
+			auto id = parti.EachParti[i][0];
+			auto data = prep->data.val[id];
+			appr_alg->addPoint((void*)(data), (size_t)id);
+			std::mutex inlock;
+
+			auto vecsize = parti.nums[i];
+			lsh::timer timer;
+#pragma omp parallel for
+			for (int k = 1; k < vecsize; k++) {
+				size_t j2 = 0;
+#pragma omp critical
+				{
+					j1++;
+					j2 = j1;
+					if (j1 % report_every == 0) {
+						std::cout << j1 / (0.01 * N) << " %, " << report_every / (1000.0 * timer.elapsed()) << " kips\n";
+						timer.restart();
+					}
+				}
+				j2 = parti.EachParti[i][k];
+				float* data = prep->data.val[j2];
+				appr_alg->addPoint((void*)(data), (size_t)j2);
+			}
+		}
+	}
+
+	void SetHash();
+
+
+
+	void GetHash() {
+		std::mt19937 rng(int(std::time(0)));
+		std::uniform_real_distribution<float> ur(-1, 1);
+		int count = 0;
+		for (int j = 0; j < N; j++)
+		{
+			assert(parti.MaxLen[parti.chunks[j]] >= prep->SquareLen[j]);
+			prep->data.val[j][dim - 1] = sqrt(parti.MaxLen[parti.chunks[j]] - prep->SquareLen[j]);
+			if (ur(rng) > 0) {
+				prep->data.val[j][dim - 1] *= -1;
+				++count;
+			}
+		}
+	}
+
+	void knn(queryN* q) {
+		lsh::timer timer;
+		timer.restart();
+	
+		for (int i = 0; i < parti.num_chunk; ++i) {
+			//apgs[i] = new hnsw(ips, parti.nums[i], M, ef);
+			auto& appr_alg = apgs[i];
+			auto id = parti.EachParti[i][0];
+			auto data = prep->data.val[id];
+			//appr_alg->addPoint((void*)(data), (size_t)id);
+			//std::mutex inlock;
+			auto res = appr_alg->searchKnn(q->queryPoint, q->k);
+
+			while (!res.empty()) {
+				auto top = res.top();
+				res.pop();
+				q->resHeap.emplace(top.second, 1.0f - top.first);
+				while (q->resHeap.size() > q->k) q->resHeap.pop();
+			}
+		}
+
+		while (!q->resHeap.empty()) {
+			auto top = q->resHeap.top();
+			q->resHeap.pop();
+
+			q->res.emplace_back(top.id, top.inp);
+		}
+		
+		std::reverse(q->res.begin(), q->res.end());
+
+		q->time_total = timer.elapsed();
+	}
+
+	//void GetTables(Preprocess& prep);
+	//bool IsBuilt(const std::string& file);
+	~maria() {}
+};
+
+class myHNSW {
+private:
+	std::string index_file;
+	IpSpace* ips = nullptr;
+	hnsw* apg = nullptr;
+	Preprocess* prep = nullptr;
+public:
+	int N;
+	int dim;
+	// Number of hash functions
+	int S;
+	//#L Tables; 
+	int L;
+	// Dimension of the hash table
+	int K;
+	myHNSW(Preprocess& prep_, Parameter& param_, const std::string& file, Partition& part_, const std::string& funtable){
+		N = param_.N;
+		dim = param_.dim;
+		L = param_.L;
+		K = param_.K;
+		S = param_.S;
+		prep = &prep_;
+		//GetHash();
+		buildIndex();
+	}
+
+	void buildIndex() {
+		int M = 24;
+		int ef = 40;
+		ips = new IpSpace(dim);
+		//apg = new hnsw[parti.num_chunk];
+		size_t report_every = N / 20;
+		if (report_every > 1e5) report_every = 1e5;
+
+		int j1 = 0;
+		apg = new hnsw(ips, N, M, ef);
+		auto id = 0;
+		auto data = prep->data.val[id];
+		apg->addPoint((void*)(data), (size_t)id);
+		std::mutex inlock;
+
+		auto vecsize = N;
+		lsh::timer timer;
+#pragma omp parallel for
+		for (int k = 1; k < vecsize; k++) {
+			size_t j2 = 0;
+#pragma omp critical
+			{
+				j1++;
+				j2 = j1;
+				if (j1 % report_every == 0) {
+					std::cout << j1 / (0.01 * N) << " %, " << report_every / (1000.0 * timer.elapsed()) << " kips\n";
+					timer.restart();
+				}
+			}
+			j2 = k;
+			float* data = prep->data.val[j2];
+			apg->addPoint((void*)(data), (size_t)j2);
+		}
+	}
+
+
+	void knn(queryN* q) {
+		lsh::timer timer;
+		timer.restart();
+		//apgs[i] = new hnsw(ips, parti.nums[i], M, ef);
+		auto& appr_alg = apg;
+		auto id = 0;
+		auto data = prep->data.val[id];
+		//appr_alg->addPoint((void*)(data), (size_t)id);
+		//std::mutex inlock;
+		auto res = appr_alg->searchKnn(q->queryPoint, q->k);
+
+		while (!res.empty()) {
+			auto top = res.top();
+			res.pop();
+			q->resHeap.emplace(top.second, 1.0f - top.first);
+			while (q->resHeap.size() > q->k) q->resHeap.pop();
+		}
+
+		while (!q->resHeap.empty()) {
+			auto top = q->resHeap.top();
+			q->resHeap.pop();
+
+			q->res.emplace_back(top.id, top.inp);
+		}
+
+		std::reverse(q->res.begin(), q->res.end());
+
+		q->time_total = timer.elapsed();
+	}
+
+	//void GetTables(Preprocess& prep);
+	//bool IsBuilt(const std::string& file);
+	~myHNSW() {}
+};

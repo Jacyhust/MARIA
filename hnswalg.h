@@ -1073,7 +1073,7 @@ namespace hnswlib {
             // Initialisation of the data and label
             memcpy(getExternalLabeLp(cur_c), &label, sizeof(labeltype));
             memcpy(getDataByInternalId(cur_c), data_point, data_size_);
-            delete glock;
+            //delete glock;
 
             if (curlevel) {
                 linkLists_[cur_c] = (char *) malloc(size_links_per_element_ * curlevel + 1);

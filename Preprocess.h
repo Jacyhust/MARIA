@@ -4,6 +4,7 @@
 #include <assert.h>
 #include <string>
 #include <vector>
+#include <queue>
 class Preprocess
 {
 public:
@@ -41,12 +42,19 @@ private:
 public:
 	int num_chunk;
 	std::vector<float> MaxLen;
+
 	//The chunk where each point belongs
+	//chunks[i]=j: i-th point is in j-th parti
 	std::vector<int> chunks;
+
 	//The data size of each chunks
+	//nums[i]=j: i-th parti has j points
 	std::vector<int> nums;
+
 	//The buckets by parti;
+	//EachParti[i][j]=k: k-th point is the j-th point in i-th parti
 	std::vector<std::vector<int>> EachParti;
+
 	std::vector<Dist_id> distpairs;
 	void display();
 
@@ -108,4 +116,88 @@ public:
 	~Parameter();
 };
 
+struct Res//the result of knns
+{
+	float inp;
+	int id;
+	Res() = default;
+	Res(int id_, float inp_) :id(id_), inp(inp_) {}
+	bool operator < (const Res& rhs) const {
+		return inp > rhs.inp;
+	}
+};
 
+class queryN
+{
+public:
+	// the parameter "c" in "c-ANN"
+	float c;
+	//which chunk is accessed
+	//int chunks;
+
+	//float R_min = 4500.0f;//mnist
+	//float R_min = 1.0f;
+	float init_w = 1.0f;
+
+	float* queryPoint = NULL;
+	float* hashval = NULL;
+	float** myData = NULL;
+	int dim = 1;
+
+	int UB = 0;
+	float minKdist = FLT_MAX;
+	// Set of points sifted
+	std::priority_queue<Res> resHeap;
+
+	//std::vector<int> keys;
+
+public:
+	// k-NN
+	unsigned k = 1;
+	// Indice of query point in dataset. Be equal to -1 if the query point isn't in the dataset.
+	unsigned flag = -1;
+
+	float beta = 0;
+
+	unsigned cost = 0;
+
+	//#access;
+	int maxHop = -1;
+	//
+	unsigned prunings = 0;
+	//cost of each partition
+	std::vector<int> costs;
+	//
+	float time_total = 0;
+	//
+	float timeHash = 0;
+	//
+	float time_sift = 0;
+
+	float time_verify = 0;
+	// query result:<indice of ANN,distance of ANN>
+	std::vector<Res> res;
+
+public:
+	queryN(unsigned id, float c_, unsigned k_, Preprocess& prep, float beta_) {
+		flag = id;
+		c = c_;
+		k = k_;
+		beta = beta_;
+		myData = prep.data.val;
+		dim = prep.data.dim + 1;
+		queryPoint = new float[dim];
+		for (int i = 0; i < dim - 1; ++i) {
+			queryPoint[i] = myData[id][i];
+		}
+		queryPoint[dim - 1] = 0.0f;
+		//search();
+	}
+
+	//void search();
+
+	~queryN() { 
+		delete hashval; 
+		delete queryPoint;
+	}
+};

@@ -20,9 +20,11 @@
 #include "basis.h"
 #include "alg.h"
 
+#include "maria.h"
+
 extern std::string data_fold, index_fold;
 extern std::string data_fold1, data_fold2;
-
+std::unique_lock<std::mutex>* glock = nullptr;
 // Fargo Project: Revised by Xi ZHAO -- Nov 16, 2022
 
 // For PVDLB 2023: FARGO: Fast Maximum Inner Product Search via Global Multi-Probing
@@ -54,14 +56,21 @@ int main(int argc, char const* argv[])
 
 	Parameter param(prep, L, K, 1);
 
+
+
 	lsh::timer timer;
 	Partition parti(c, prep);
 	mf_alsh::Hash myslsh(prep, param, index_fold.append(argvStr[2]), parti, data_fold2 + "MyfunctionXTheta.data");
+	myHNSW hnsw(prep, param, index_fold.append(argvStr[2]), parti, data_fold2 + "MyfunctionXTheta.data");
+	maria maria(prep, param, index_fold.append(argvStr[2]), parti, data_fold2 + "MyfunctionXTheta.data");
 
 	std::vector<int> ms = { 0,100,200,300,400,500,600,700,800,900,1000};
+	ms = { 100 };
 	for (auto& x : ms) {
 		m = x + k;
 		res.push_back(Alg0_mfalsh(myslsh, c, m, k, L, K, prep));
+		res.push_back(Alg0_maria(maria, c, m, k, L, K, prep));
+		res.push_back(Alg0_HNSW(hnsw, c, m, k, L, K, prep));
 	}
 
 	saveAndShow(c, k, dataset, res);
