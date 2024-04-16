@@ -45,7 +45,7 @@ public:
 		K = param_.K;
 		S = param_.S;
 		prep=&prep_; 
-		GetHash();
+		randomXT();
 		buildIndex();
 	}
 
@@ -76,7 +76,7 @@ public:
 					j1++;
 					j2 = j1;
 					if (j1 % report_every == 0) {
-						std::cout << j1 / (0.01 * N) << " %, " << report_every / (1000.0 * timer.elapsed()) << " kips\n";
+						std::cout << (int)(j1 / (0.01 * N)) << " %, " << (report_every / (1000.0 * timer.elapsed())) << " kips\n";
 						timer.restart();
 					}
 				}
@@ -87,11 +87,9 @@ public:
 		}
 	}
 
-	void SetHash();
 
 
-
-	void GetHash() {
+	void randomXT() {
 		std::mt19937 rng(int(std::time(0)));
 		std::uniform_real_distribution<float> ur(-1, 1);
 		int count = 0;
@@ -141,7 +139,12 @@ public:
 
 	//void GetTables(Preprocess& prep);
 	//bool IsBuilt(const std::string& file);
-	~maria() {}
+	~maria() {
+		for (int i = 0; i < parti.num_chunk; ++i) {
+			delete apgs[i];
+		}
+		delete[] apgs;
+	}
 };
 
 class myHNSW {
@@ -195,7 +198,7 @@ public:
 				j1++;
 				j2 = j1;
 				if (j1 % report_every == 0) {
-					std::cout << j1 / (0.01 * N) << " %, " << report_every / (1000.0 * timer.elapsed()) << " kips\n";
+					std::cout << (int)(j1 / (0.01 * N)) << " %, " << (report_every / (1000.0 * timer.elapsed())) << " kips\n";
 					timer.restart();
 				}
 			}
@@ -236,7 +239,166 @@ public:
 		q->time_total = timer.elapsed();
 	}
 
+	~myHNSW() {
+		delete apg;
+	}
+};
+
+class mariaV2
+{
+private:
+	std::string index_file;
+
+public:
+	int N;
+	int dim;
+	// Number of hash functions
+	int S;
+	//#L Tables; 
+	int L;
+	// Dimension of the hash table
+	int K;
+
+	Partition parti;
+	Preprocess* prep = nullptr;
+	IpSpace* ips = nullptr;
+	hnsw** apgs = nullptr;
+
+	std::vector<int> interEdges;
+
+public:
+	mariaV2(Preprocess& prep_, Parameter& param_, const std::string& file, Partition& part_, const std::string& funtable) :parti(part_) {
+		N = param_.N;
+		dim = param_.dim + 1;
+		L = param_.L;
+		K = param_.K;
+		S = param_.S;
+		prep = &prep_;
+		randomXT();
+		buildIndex();
+	}
+
+	void buildIndex() {
+		int M = 24;
+		int ef = 40;
+		ips = new IpSpace(dim);
+		apgs = new hnsw * [parti.num_chunk];
+		size_t report_every = N / 20;
+		if (report_every > 1e5) report_every = 1e5;
+
+		int j1 = 0;
+		for (int i = 0; i < parti.num_chunk; ++i) {
+			apgs[i] = new hnsw(ips, parti.nums[i], M, ef);
+			auto& appr_alg = apgs[i];
+			auto id = parti.EachParti[i][0];
+			auto data = prep->data.val[id];
+			appr_alg->addPoint((void*)(data), (size_t)id);
+			std::mutex inlock;
+
+			auto vecsize = parti.nums[i];
+			lsh::timer timer;
+#pragma omp parallel for
+			for (int k = 1; k < vecsize; k++) {
+				size_t j2 = 0;
+#pragma omp critical
+				{
+					j1++;
+					j2 = j1;
+					if (j1 % report_every == 0) {
+						std::cout << (int)(j1 / (0.01 * N)) << " %, " << (report_every / (1000.0 * timer.elapsed())) << " kips\n";
+						timer.restart();
+					}
+				}
+				j2 = parti.EachParti[i][k];
+				float* data = prep->data.val[j2];
+				appr_alg->addPoint((void*)(data), (size_t)j2);
+			}
+		}
+	}
+
+
+
+	void randomXT() {
+		std::mt19937 rng(int(std::time(0)));
+		std::uniform_real_distribution<float> ur(-1, 1);
+		int count = 0;
+		for (int j = 0; j < N; j++)
+		{
+			assert(parti.MaxLen[parti.chunks[j]] >= prep->SquareLen[j]);
+			prep->data.val[j][dim - 1] = sqrt(parti.MaxLen[parti.chunks[j]] - prep->SquareLen[j]);
+			if (ur(rng) > 0) {
+				prep->data.val[j][dim - 1] *= -1;
+				++count;
+			}
+		}
+	}
+
+	void interConnect() {
+		interEdges.resize(N, -1);
+		for (int i = 1; i < parti.num_chunk; ++i) {
+			//apgs[i] = new hnsw(ips, parti.nums[i], M, ef);
+			auto& appr_alg = apgs[i - 1];
+			//auto id = parti.EachParti[i][0];
+			//auto data = prep->data.val[id];
+			//appr_alg->addPoint((void*)(data), (size_t)id);
+			//std::mutex inlock;
+
+			auto vecsize = parti.nums[i];
+			lsh::timer timer;
+#pragma omp parallel for
+			for (int k = 0; k < vecsize; k++) {
+				auto id = parti.EachParti[i][k];
+				auto data = prep->data.val[id];	
+				auto res = appr_alg->searchKnnWithDist(data, 1, cal_L2sqr_hnsw);
+
+				interEdges[id] = res.top().second;
+			}
+
+			//auto res = appr_alg->searchKnnWithDist(q->queryPoint, 1, cal_L2sqr_hnsw);
+
+			
+		}
+	}
+
+	void knn(queryN* q) {
+		lsh::timer timer;
+		timer.restart();
+
+		for (int i = 0; i < parti.num_chunk; ++i) {
+			//apgs[i] = new hnsw(ips, parti.nums[i], M, ef);
+			auto& appr_alg = apgs[i];
+			//auto id = parti.EachParti[i][0];
+			//auto data = prep->data.val[id];
+			//appr_alg->addPoint((void*)(data), (size_t)id);
+			//std::mutex inlock;
+			auto res = appr_alg->searchKnn(q->queryPoint, q->k);
+
+			while (!res.empty()) {
+				auto top = res.top();
+				res.pop();
+				q->resHeap.emplace(top.second, 1.0f - top.first);
+				while (q->resHeap.size() > q->k) q->resHeap.pop();
+			}
+		}
+
+		while (!q->resHeap.empty()) {
+			auto top = q->resHeap.top();
+			q->resHeap.pop();
+
+			q->res.emplace_back(top.id, top.inp);
+		}
+
+		std::reverse(q->res.begin(), q->res.end());
+
+		q->time_total = timer.elapsed();
+	}
+
 	//void GetTables(Preprocess& prep);
 	//bool IsBuilt(const std::string& file);
-	~myHNSW() {}
+	~mariaV2() {
+		for (int i = 0; i < parti.num_chunk; ++i) {
+			delete apgs[i];
+		}
+		delete[] apgs;
+	}
 };

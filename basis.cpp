@@ -17,6 +17,20 @@ float cal_inner_product(float* v1, float* v2, int dim)
 	
 }
 
+float cal_L2sqr(float* v1, float* v2, int dim)
+{
+#ifdef __AVX2__
+	return (faiss::fvec_L2sqr_avx512(v1, v2, dim));
+#else
+	float res = 0.0;
+	for (int i = 0; i < dim; ++i) {
+		res += (v1[i] - v2[i]) * (v1[i] - v2[i]);
+	}
+	return res;
+#endif
+
+}
+
 float cal_inner_product_trans(float* v1, float** mat, int dim)
 {
 	float res = 0.0f;

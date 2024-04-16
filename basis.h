@@ -112,6 +112,7 @@ namespace lsh
 }
 
 float cal_inner_product(float* v1, float* v2, int dim);
+float cal_L2sqr(float* v1, float* v2, int dim);
 float cal_inner_product_trans(float* v1, float** mat, int dim);
 
 template <class T>
