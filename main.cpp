@@ -33,7 +33,7 @@ std::unique_lock<std::mutex>* glock = nullptr;
 
 int main(int argc, char const* argv[])
 {
-	std::string dataset = "gist";
+	std::string dataset = "tiny5m";
 	if (argc > 1) {
 		dataset = argv[1];
 	}
@@ -45,6 +45,8 @@ int main(int argc, char const* argv[])
 	float c = 0.9f;
 	int k = 50;
 	int m, L, K;
+
+
 
 	std::cout << "Using FARGO for " << argvStr[1] << std::endl;
 	Preprocess prep(data_fold1 + (argvStr[1]), data_fold2 + (argvStr[3]));

@@ -53,12 +53,12 @@ public:
 		int M = 24;
 		int ef = 40;
 		ips = new IpSpace(dim);
-		apgs = new hnsw* [parti.num_chunk];
+		apgs = new hnsw* [parti.numChunks];
 		size_t report_every = N / 20;
 		if (report_every > 1e5) report_every = 1e5;
 
 		int j1 = 0;
-		for (int i = 0; i < parti.num_chunk; ++i) {
+		for (int i = 0; i < parti.numChunks; ++i) {
 			apgs[i] = new hnsw(ips, parti.nums[i], M, ef);
 			auto& appr_alg = apgs[i];
 			auto id = parti.EachParti[i][0];
@@ -76,7 +76,7 @@ public:
 					j1++;
 					j2 = j1;
 					if (j1 % report_every == 0) {
-						std::cout << (int)(j1 / (0.01 * N)) << " %, " << (report_every / (1000.0 * timer.elapsed())) << " kips\n";
+						std::cout << (int)round(j1 / (0.01 * N)) << " %, " << (report_every / (1000.0 * timer.elapsed())) << " kips\n";
 						timer.restart();
 					}
 				}
@@ -108,7 +108,11 @@ public:
 		lsh::timer timer;
 		timer.restart();
 	
-		for (int i = 0; i < parti.num_chunk; ++i) {
+		for (int i = parti.numChunks - 1; i >= 0; --i) {
+			if ((!q->resHeap.empty()) && q->resHeap.top().inp > 
+				q->norm * sqrt(parti.MaxLen[i])) break;
+
+
 			//apgs[i] = new hnsw(ips, parti.nums[i], M, ef);
 			auto& appr_alg = apgs[i];
 			auto id = parti.EachParti[i][0];
@@ -123,12 +127,13 @@ public:
 				q->resHeap.emplace(top.second, 1.0f - top.first);
 				while (q->resHeap.size() > q->k) q->resHeap.pop();
 			}
+
+			
 		}
 
 		while (!q->resHeap.empty()) {
 			auto top = q->resHeap.top();
 			q->resHeap.pop();
-
 			q->res.emplace_back(top.id, top.inp);
 		}
 		
@@ -140,7 +145,7 @@ public:
 	//void GetTables(Preprocess& prep);
 	//bool IsBuilt(const std::string& file);
 	~maria() {
-		for (int i = 0; i < parti.num_chunk; ++i) {
+		for (int i = 0; i < parti.numChunks; ++i) {
 			delete apgs[i];
 		}
 		delete[] apgs;
@@ -177,7 +182,7 @@ public:
 		int M = 24;
 		int ef = 40;
 		ips = new IpSpace(dim);
-		//apg = new hnsw[parti.num_chunk];
+		//apg = new hnsw[parti.numChunks];
 		size_t report_every = N / 20;
 		if (report_every > 1e5) report_every = 1e5;
 
@@ -282,12 +287,12 @@ public:
 		int M = 24;
 		int ef = 40;
 		ips = new IpSpace(dim);
-		apgs = new hnsw * [parti.num_chunk];
+		apgs = new hnsw * [parti.numChunks];
 		size_t report_every = N / 20;
 		if (report_every > 1e5) report_every = 1e5;
 
 		int j1 = 0;
-		for (int i = 0; i < parti.num_chunk; ++i) {
+		for (int i = 0; i < parti.numChunks; ++i) {
 			apgs[i] = new hnsw(ips, parti.nums[i], M, ef);
 			auto& appr_alg = apgs[i];
 			auto id = parti.EachParti[i][0];
@@ -335,7 +340,7 @@ public:
 
 	void interConnect() {
 		interEdges.resize(N, -1);
-		for (int i = 1; i < parti.num_chunk; ++i) {
+		for (int i = 1; i < parti.numChunks; ++i) {
 			//apgs[i] = new hnsw(ips, parti.nums[i], M, ef);
 			auto& appr_alg = apgs[i - 1];
 			//auto id = parti.EachParti[i][0];
@@ -364,13 +369,8 @@ public:
 		lsh::timer timer;
 		timer.restart();
 
-		for (int i = 0; i < parti.num_chunk; ++i) {
-			//apgs[i] = new hnsw(ips, parti.nums[i], M, ef);
+		for (int i = parti.numChunks - 1; i >= 0; --i) {
 			auto& appr_alg = apgs[i];
-			//auto id = parti.EachParti[i][0];
-			//auto data = prep->data.val[id];
-			//appr_alg->addPoint((void*)(data), (size_t)id);
-			//std::mutex inlock;
 			auto res = appr_alg->searchKnn(q->queryPoint, q->k);
 
 			while (!res.empty()) {
@@ -396,7 +396,7 @@ public:
 	//void GetTables(Preprocess& prep);
 	//bool IsBuilt(const std::string& file);
 	~mariaV2() {
-		for (int i = 0; i < parti.num_chunk; ++i) {
+		for (int i = 0; i < parti.numChunks; ++i) {
 			delete apgs[i];
 		}
 		delete[] apgs;

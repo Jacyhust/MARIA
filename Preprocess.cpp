@@ -197,7 +197,7 @@ Preprocess::~Preprocess()
 Partition::Partition(float c_, float c0_, Preprocess& prep)
 {
 	ratio = (pow(c0_, 4.0f) - 1) / (pow(c0_, 4.0f) - c_);
-	MakeChunks(prep);
+	make_chunks_fargo(prep);
 }
 
 Partition::Partition(float c_, Preprocess& prep)
@@ -205,41 +205,74 @@ Partition::Partition(float c_, Preprocess& prep)
 	ratio = 0.95;
 	float c0_ = 1.5f;
 	
-	MakeChunks(prep);
+	make_chunks_fargo(prep);
 }
 
 
 
-void Partition::MakeChunks(Preprocess& prep)
+void Partition::make_chunks_fargo(Preprocess& prep)
 {
-	distpairs.clear();
+	std::vector<Dist_id> distpairs;
 	std::vector<int> bucket;
-	Dist_id pair;
+	//Dist_id pair;
 	int N_ = prep.data.N;
-	int n;
-	for (int j = 0; j < N_; j++)
-	{
-		pair.id = j;
-		pair.dist = prep.SquareLen[j];
-		distpairs.push_back(pair);
+	int cnt = 0;
+	for (int j = 0; j < N_; j++) {
+		distpairs.emplace_back(j, prep.SquareLen[j]);
 	}
 	std::sort(distpairs.begin(), distpairs.end());
 
-	num_chunk = 0;
+	numChunks = 0;
 	chunks.resize(N_);
 	int j = 0;
-	while (j < N_)
-	{
+	while (j < N_){
 		float M = distpairs[j].dist / ratio;
-		n = 0;
+		cnt = 0;
 		bucket.clear();
 		while (j < N_)
 		{
-			if ((distpairs[j].dist > M || n >= MAXSIZE)) {
+			if ((distpairs[j].dist > M || cnt >= MAXSIZE)) {
 				break;
 			}
 
-			chunks[distpairs[j].id] = num_chunk;
+			chunks[distpairs[j].id] = numChunks;
+			bucket.push_back(distpairs[j].id);
+			j++;
+			cnt++;
+		}
+		nums.push_back(cnt);
+		MaxLen.push_back(distpairs[(size_t)j - 1].dist);
+		EachParti.push_back(bucket);
+		bucket.clear();
+		numChunks++;
+	}
+
+	display();
+}
+
+void Partition::make_chunks_maria(Preprocess& prep)
+{
+	std::vector<Dist_id> distpairs;
+	std::vector<int> bucket;
+	//Dist_id pair;
+	int N_ = prep.data.N;
+	int n;
+	for (int j = 0; j < N_; j++){
+		distpairs.emplace_back(j, prep.SquareLen[j]);
+	}
+	std::sort(distpairs.begin(), distpairs.end());
+
+	numChunks = 0;
+	chunks.resize(N_);
+	int j = 0;
+	while (j < N_){
+		float M = distpairs[j].dist / ratio;
+		n = 0;
+		bucket.clear();
+		while (j < N_){
+			if ((distpairs[j].dist > M || n >= MAXSIZE)) break;
+
+			chunks[distpairs[j].id] = numChunks;
 			bucket.push_back(distpairs[j].id);
 			j++;
 			n++;
@@ -248,7 +281,7 @@ void Partition::MakeChunks(Preprocess& prep)
 		MaxLen.push_back(distpairs[(size_t)j - 1].dist);
 		EachParti.push_back(bucket);
 		bucket.clear();
-		num_chunk++;
+		numChunks++;
 	}
 
 	display();
@@ -256,14 +289,14 @@ void Partition::MakeChunks(Preprocess& prep)
 
 void Partition::display()
 {
-	std::vector<int> n_(num_chunk, 0);
+	std::vector<int> n_(numChunks, 0);
 	int N_ = std::accumulate(nums.begin(), nums.end(), 0);
 	for (int j = 0; j < N_; j++)
 	{
 		n_[chunks[j]]++;
 	}
 	bool f1 = false, f2 = false;
-	for (int j = 0; j < num_chunk; j++)
+	for (int j = 0; j < numChunks; j++)
 	{
 		if (n_[j] != nums[j]) {
 			f1 = true;
@@ -272,91 +305,12 @@ void Partition::display()
 	}
 
 	std::cout << "This is the result of partition:"
-		<< "\n Blocks       =" << num_chunk
+		<< "\n Blocks       =" << numChunks
 		<< "\n ratio_       =" << sqrt(ratio)
 		<< "\n n_pts_       =" << N_ << std::endl;
 }
 
 Partition::~Partition()
-{}
-
-PartitionNR::PartitionNR(int m_, Preprocess& prep)
-{
-	num_chunk = m_;
-	MakeChunks(prep);
-}
-
-
-
-void PartitionNR::MakeChunks(Preprocess& prep)
-{
-	std::vector<Dist_id> distpairs;
-	std::vector<int> bucket;
-	Dist_id pair;
-	int N_ = prep.data.N;
-	int n;
-	int max_size_ = N_ / num_chunk + 1;
-	for (int j = 0; j < N_; j++)
-	{
-		pair.id = j;
-		pair.dist = prep.SquareLen[j];
-		distpairs.push_back(pair);
-	}
-	std::sort(distpairs.begin(), distpairs.end());
-
-	num_chunk = 0;
-	chunks.resize(N_);
-	int j = 0;
-	while (j < N_)
-	{
-		n = 0;
-		bucket.clear();
-		while (j < N_)
-		{
-			if ((n >= max_size_)) {
-				break;
-			}
-
-			chunks[distpairs[j].id] = num_chunk;
-			bucket.push_back(distpairs[j].id);
-			j++;
-			n++;
-		}
-		nums.push_back(n);
-		MaxLen.push_back(distpairs[j - 1].dist);
-		EachParti.push_back(bucket);
-		bucket.clear();
-		num_chunk++;
-	}
-
-	display();
-}
-
-void PartitionNR::display()
-{
-	std::vector<int> n_(num_chunk, 0);
-	int N_ = std::accumulate(nums.begin(), nums.end(), 0);
-	for (int j = 0; j < N_; j++)
-	{
-		n_[chunks[j]]++;
-	}
-	bool f1 = false, f2 = false;
-	for (int j = 0; j < num_chunk; j++)
-	{
-		if (n_[j] != nums[j]) {
-			f1 = true;
-			break;
-		}
-	}
-
-
-	std::cout << "This is the result of partition:"
-		<< "\n Blocks       =" << num_chunk
-		<< "\n ratio_       =" << sqrt(ratio)
-		<< "\n n_pts_       =" << N_ << "\n";
-}
-
-PartitionNR::~PartitionNR()
 {}
 
 Parameter::Parameter(Preprocess& prep, int L_, int K_, int M_)

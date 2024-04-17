@@ -1,5 +1,6 @@
 #pragma once
 #include "StructType.h"
+#include "basis.h"
 #include <cmath>
 #include <assert.h>
 #include <string>
@@ -27,8 +28,10 @@ public:
 
 struct Dist_id
 {
-	int id;
-	float dist;
+	int id = -1;
+	float dist = 0.0f;
+	//Dist_id() = default;
+	Dist_id(int id_, float dist_) :id(id_), dist(dist_) {}
 	bool operator < (const Dist_id& rhs) {
 		return dist < rhs.dist;
 	}
@@ -38,9 +41,10 @@ class Partition
 {
 private:
 	float ratio;
-	void MakeChunks(Preprocess& prep);
+	void make_chunks_fargo(Preprocess& prep);
+	void make_chunks_maria(Preprocess& prep);
 public:
-	int num_chunk;
+	int numChunks;
 	std::vector<float> MaxLen;
 
 	//The chunk where each point belongs
@@ -55,7 +59,7 @@ public:
 	//EachParti[i][j]=k: k-th point is the j-th point in i-th parti
 	std::vector<std::vector<int>> EachParti;
 
-	std::vector<Dist_id> distpairs;
+	//std::vector<Dist_id> distpairs;
 	void display();
 
 	Partition(float c_, Preprocess& prep);
@@ -63,27 +67,6 @@ public:
 	Partition(float c_, float c0_, Preprocess& prep);
 	//Partition() {}
 	~Partition();
-};
-
-class PartitionNR
-{
-private:
-	float ratio;
-	void MakeChunks(Preprocess& prep);
-public:
-	int num_chunk;
-	std::vector<float> MaxLen;
-	//The chunk where each point belongs
-	std::vector<int> chunks;
-	//The data size of each chunks
-	std::vector<int> nums;
-	//The buckets by parti;
-	std::vector<std::vector<int>> EachParti;
-
-	void display();
-	PartitionNR(int m_, Preprocess& prep);
-	PartitionNR():num_chunk(0),ratio(0.0f) {}
-	~PartitionNR();
 };
 
 class Parameter //N,dim,S, L, K, M, W;
@@ -98,9 +81,9 @@ public:
 	// Dimension of the hash table
 	int K;
 	//
-	int MaxSize;
+	int MaxSize = -1;
 	//
-	int KeyLen;
+	int KeyLen = -1;
 
 	int M = 1;
 
@@ -118,8 +101,8 @@ public:
 
 struct Res//the result of knns
 {
-	float inp;
-	int id;
+	float inp = 0.0f;
+	int id = -1;
 	Res() = default;
 	Res(int id_, float inp_) :id(id_), inp(inp_) {}
 	bool operator < (const Res& rhs) const {
@@ -158,7 +141,7 @@ public:
 	unsigned flag = -1;
 
 	float beta = 0;
-
+	float norm = 0.0f;
 	unsigned cost = 0;
 
 	//#access;
@@ -191,6 +174,8 @@ public:
 			queryPoint[i] = myData[id][i];
 		}
 		queryPoint[dim - 1] = 0.0f;
+
+		norm = sqrt(cal_inner_product(queryPoint, queryPoint, dim));
 		//search();
 	}
 

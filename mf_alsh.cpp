@@ -167,8 +167,8 @@ void Hash::GetTables(Preprocess& prep)
 
 	int num_bucket = 1 << K;
 
-	myIndexes = new std::vector<int> * *[parti.num_chunk];
-	for (j = 0; j < parti.num_chunk; ++j) {
+	myIndexes = new std::vector<int> * *[parti.numChunks];
+	for (j = 0; j < parti.numChunks; ++j) {
 		myIndexes[j] = new std::vector<int> * [L];
 		for (i = 0; i < L; ++i) {
 			myIndexes[j][i] = new std::vector<int>[num_bucket];
@@ -193,7 +193,7 @@ void Hash::GetTables(Preprocess& prep)
 Hash::~Hash()
 {
 	printf("Destroy Index!\n");
-	for (int j = 0; j < parti.num_chunk; ++j) {
+	for (int j = 0; j < parti.numChunks; ++j) {
 		for (int i = 0; i < L; ++i) {
 			for (int l = 0; l < (1 << K); ++l) {
 				std::vector<int>().swap(myIndexes[j][i][l]);
@@ -298,9 +298,9 @@ void Query::siftF(Hash& hash, Preprocess& prep)
 	int size = 0;
 	//int num_cand = 0;
 	inp_LB = MINFLOAT;
-	costs.resize(hash.parti.num_chunk);
+	costs.resize(hash.parti.numChunks);
 
-	for (int t = hash.parti.num_chunk - 1; t >= 0; t--){
+	for (int t = hash.parti.numChunks - 1; t >= 0; t--){
 		if (sqrt(hash.parti.MaxLen[t]) * norm < inp_LB / c) break;
 		if (hash.parti.nums[t] < 4 * CANDIDATES) {
 			int num_cand = hash.parti.EachParti[t].size();
@@ -342,7 +342,7 @@ void Query::siftF(Hash& hash, Preprocess& prep)
 	}
 
 
-	for (int i = 0; i < hash.parti.num_chunk; i++){
+	for (int i = 0; i < hash.parti.numChunks; i++){
 		cost += costs[i];
 	}
 	time_verify = timer.elapsed();
