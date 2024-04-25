@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 #include <queue>
+#include <cfloat>
 class Preprocess
 {
 public:

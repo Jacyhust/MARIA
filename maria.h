@@ -217,13 +217,14 @@ public:
 	void knn(queryN* q) {
 		lsh::timer timer;
 		timer.restart();
+		int ef=2000;
 		//apgs[i] = new hnsw(ips, parti.nums[i], M, ef);
 		auto& appr_alg = apg;
 		auto id = 0;
 		auto data = prep->data.val[id];
 		//appr_alg->addPoint((void*)(data), (size_t)id);
 		//std::mutex inlock;
-		auto res = appr_alg->searchKnn(q->queryPoint, q->k);
+		auto res = appr_alg->searchKnn(q->queryPoint, q->k+ef);
 
 		while (!res.empty()) {
 			auto top = res.top();

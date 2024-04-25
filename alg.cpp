@@ -2,7 +2,7 @@
 
 #if defined(unix) || defined(__unix__)
 //std::string data_fold = "/home/xizhao/dataset/", index_fold = " ";
-std::string data_fold = "./../../wd/dataset/", index_fold = " ";
+std::string data_fold = "/home/xizhao/dataset/", index_fold = " ";
 std::string data_fold1 = data_fold, data_fold2 = data_fold+("MIPS/");
 #else
 std::string data_fold = "E:/Dataset_for_c/", index_fold = " ";

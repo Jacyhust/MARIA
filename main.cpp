@@ -46,8 +46,6 @@ int main(int argc, char const* argv[])
 	int k = 50;
 	int m, L, K;
 
-
-
 	std::cout << "Using FARGO for " << argvStr[1] << std::endl;
 	Preprocess prep(data_fold1 + (argvStr[1]), data_fold2 + (argvStr[3]));
 	std::vector<resOutput> res;
@@ -57,8 +55,6 @@ int main(int argc, char const* argv[])
 	c = 0.8;
 
 	Parameter param(prep, L, K, 1);
-
-
 
 	lsh::timer timer;
 	Partition parti(c, prep);
@@ -70,9 +66,10 @@ int main(int argc, char const* argv[])
 	ms = { 100 };
 	for (auto& x : ms) {
 		m = x + k;
-		res.push_back(Alg0_mfalsh(myslsh, c, m, k, L, K, prep));
+		// res.push_back(Alg0_mfalsh(myslsh, c, m, k, L, K, prep));
 		res.push_back(Alg0_maria(maria, c, m, k, L, K, prep));
 		res.push_back(Alg0_HNSW(hnsw, c, m, k, L, K, prep));
+	
 	}
 
 	saveAndShow(c, k, dataset, res);
