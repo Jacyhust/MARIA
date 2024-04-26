@@ -66,9 +66,10 @@ int main(int argc, char const* argv[])
 	ms = { 100 };
 	for (auto& x : ms) {
 		m = x + k;
-		res.push_back(Alg0_mfalsh(myslsh, c, m, k, L, K, prep));
+		// res.push_back(Alg0_mfalsh(myslsh, c, m, k, L, K, prep));
 		res.push_back(Alg0_maria(maria, c, m, k, L, K, prep));
 		res.push_back(Alg0_HNSW(hnsw, c, m, k, L, K, prep));
+	
 	}
 
 	saveAndShow(c, k, dataset, res);

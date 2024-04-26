@@ -151,7 +151,7 @@ inline resOutput Alg0_HNSW(myHNSW& hnsw, float c_, int m_, int k_, int L_, int K
 	resOutput res;
 	res.algName = "HNSW";
 	res.L = -1;
-	res.K = -1;
+	res.K = 200;
 	res.c = c_;
 	res.time = mean_time * 1000;
 	res.recall = ((float)perform.NN_num) / (perform.num * k_);
