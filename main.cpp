@@ -62,12 +62,21 @@ int main(int argc, char const* argv[])
 	myHNSW hnsw(prep, param, index_fold.append(argvStr[2]), parti, data_fold2 + "MyfunctionXTheta.data");
 	maria maria(prep, param, index_fold.append(argvStr[2]), parti, data_fold2 + "MyfunctionXTheta.data");
 
-	std::vector<int> ms = { 0,100,200,300,400,500,600,700,800,900,1000};
-	ms = { 100 };
+	std::vector<int> ms = { 0,100,200,400,800,1200,1600,3200,6400};
+	//ms = { 100 };
+	res.push_back(Alg0_maria(maria, c, 100, k, L, K, prep));
+	// for (auto& x : ms) {
+	// 	m = x + k;
+	// 	// res.push_back(Alg0_mfalsh(myslsh, c, m, k, L, K, prep));
+	// 	res.push_back(Alg0_maria(maria, c, m, k, L, K, prep));
+	// 	//res.push_back(Alg0_HNSW(hnsw, c, m, k, L, K, prep));
+	
+	// }
+
 	for (auto& x : ms) {
 		m = x + k;
 		// res.push_back(Alg0_mfalsh(myslsh, c, m, k, L, K, prep));
-		res.push_back(Alg0_maria(maria, c, m, k, L, K, prep));
+		//res.push_back(Alg0_maria(maria, c, m, k, L, K, prep));
 		res.push_back(Alg0_HNSW(hnsw, c, m, k, L, K, prep));
 	
 	}

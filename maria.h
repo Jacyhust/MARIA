@@ -178,6 +178,10 @@ public:
 		buildIndex();
 	}
 
+	void setEf(size_t ef){
+		apg->setEf(ef);
+	}
+
 	void buildIndex() {
 		int M = 24;
 		int ef = 40;
@@ -217,7 +221,7 @@ public:
 	void knn(queryN* q) {
 		lsh::timer timer;
 		timer.restart();
-		int ef=2000;
+		int ef=apg->ef_;
 		//apgs[i] = new hnsw(ips, parti.nums[i], M, ef);
 		auto& appr_alg = apg;
 		auto id = 0;

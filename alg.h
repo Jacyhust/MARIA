@@ -109,7 +109,7 @@ inline resOutput Alg0_maria(maria& maria, float c_, int m_, int k_, int L_, int 
 	resOutput res;
 	res.algName = "Maria";
 	res.L = -1;
-	res.K = -1;
+	res.K = m_;
 	res.c = c_;
 	res.time = mean_time * 1000;
 	res.recall = ((float)perform.NN_num) / (perform.num * k_);
@@ -123,7 +123,7 @@ inline resOutput Alg0_maria(maria& maria, float c_, int m_, int k_, int L_, int 
 inline resOutput Alg0_HNSW(myHNSW& hnsw, float c_, int m_, int k_, int L_, int K_, Preprocess& prep)
 {
 	std::string query_result = ("results/MF_ALSH_result.csv");
-
+	hnsw.setEf(m_);
 	lsh::timer timer;
 	std::cout << std::endl << "RUNNING QUERY ..." << std::endl;
 
@@ -151,7 +151,7 @@ inline resOutput Alg0_HNSW(myHNSW& hnsw, float c_, int m_, int k_, int L_, int K
 	resOutput res;
 	res.algName = "HNSW";
 	res.L = -1;
-	res.K = 200;
+	res.K = m_;
 	res.c = c_;
 	res.time = mean_time * 1000;
 	res.recall = ((float)perform.NN_num) / (perform.num * k_);
