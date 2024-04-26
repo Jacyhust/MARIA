@@ -33,7 +33,7 @@ std::unique_lock<std::mutex>* glock = nullptr;
 
 int main(int argc, char const* argv[])
 {
-	std::string dataset = "tiny5m";
+	std::string dataset = "audio";
 	if (argc > 1) {
 		dataset = argv[1];
 	}
@@ -46,8 +46,6 @@ int main(int argc, char const* argv[])
 	int k = 50;
 	int m, L, K;
 
-
-
 	std::cout << "Using FARGO for " << argvStr[1] << std::endl;
 	Preprocess prep(data_fold1 + (argvStr[1]), data_fold2 + (argvStr[3]));
 	std::vector<resOutput> res;
@@ -57,8 +55,6 @@ int main(int argc, char const* argv[])
 	c = 0.8;
 
 	Parameter param(prep, L, K, 1);
-
-
 
 	lsh::timer timer;
 	Partition parti(c, prep);
