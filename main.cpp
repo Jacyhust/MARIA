@@ -65,13 +65,13 @@ int main(int argc, char const* argv[])
 	std::vector<int> ms = { 0,100,200,400,800,1200,1600,3200,6400};
 	//ms = { 100 };
 	res.push_back(Alg0_maria(maria, c, 100, k, L, K, prep));
-	// for (auto& x : ms) {
-	// 	m = x + k;
-	// 	// res.push_back(Alg0_mfalsh(myslsh, c, m, k, L, K, prep));
-	// 	res.push_back(Alg0_maria(maria, c, m, k, L, K, prep));
-	// 	//res.push_back(Alg0_HNSW(hnsw, c, m, k, L, K, prep));
+	for (auto& x : ms) {
+		m = x + k;
+		res.push_back(Alg0_mfalsh(myslsh, c, m, k, L, K, prep));
+		//res.push_back(Alg0_maria(maria, c, m, k, L, K, prep));
+		//res.push_back(Alg0_HNSW(hnsw, c, m, k, L, K, prep));
 	
-	// }
+	}
 
 	for (auto& x : ms) {
 		m = x + k;
