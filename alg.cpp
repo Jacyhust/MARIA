@@ -64,7 +64,7 @@ void saveAndShow(float c, int k, std::string& dataset, std::vector<resOutput>& r
 		<< std::setw(12) << "Time"
 		<< std::setw(12) << "Recall"
 		<< std::setw(12) << "Ratio"
-		<< std::setw(12) << "kRatio"
+		<< std::setw(12) << "Cost"
 		<< std::endl
 		<< std::endl;
 	for (int i = 0; i < res.size(); ++i) {
@@ -75,7 +75,7 @@ void saveAndShow(float c, int k, std::string& dataset, std::vector<resOutput>& r
 			<< std::setw(12) << res[i].time
 			<< std::setw(12) << res[i].recall
 			<< std::setw(12) << res[i].ratio
-			<< std::setw(12) << res[i].kRatio
+			<< std::setw(12) << res[i].cost
 			<< std::endl;
 	}
 #if defined(unix) || defined(__unix__)

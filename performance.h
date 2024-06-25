@@ -15,9 +15,9 @@ public:
 	// times of query
 	int num;
 	//
-	float time_total;
+	float time_total=0.0f;
 	//
-	float time_hash;
+	float time_hash=0.0f;
 	//
 	float time_sift;
 	//
