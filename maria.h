@@ -286,6 +286,7 @@ public:
 		prep = &prep_;
 		randomXT();
 		buildIndex();
+		interConnect();
 	}
 
 	void buildIndex() {
@@ -363,14 +364,11 @@ public:
 
 				interEdges[id] = res.top().second;
 			}
-
 			//auto res = appr_alg->searchKnnWithDist(q->queryPoint, 1, cal_L2sqr_hnsw);
-
-			
 		}
 	}
 
-	void knn(queryN* q) {
+	void knn_simple(queryN* q) {
 		lsh::timer timer;
 		timer.restart();
 
@@ -387,6 +385,57 @@ public:
 				q->resHeap.emplace(top.second, 1.0f - top.first);
 				while (q->resHeap.size() > q->k) q->resHeap.pop();
 			}
+		}
+
+		while (!q->resHeap.empty()) {
+			auto top = q->resHeap.top();
+			q->resHeap.pop();
+
+			q->res.emplace_back(top.id, top.inp);
+		}
+
+		std::reverse(q->res.begin(), q->res.end());
+
+		q->time_total = timer.elapsed();
+	}
+
+	void knn(queryN* q) {
+		lsh::timer timer;
+		timer.restart();
+
+		unsigned int ep_id=parti.EachParti[parti.numChunks - 1][0];
+
+		Res nn0=Res(-1,-FLT_MAX);
+
+		for (int i = parti.numChunks - 1; i >= 0; --i) {
+			if ((!q->resHeap.empty()) && q->resHeap.top().inp > 
+				q->norm * sqrt(parti.MaxLen[i])) break;
+
+			auto& appr_alg = apgs[i];
+			//auto res= appr_alg->searchKnn(q->queryPoint, q->k);
+			auto res = appr_alg->searchBaseLayerST<false>(ep_id,q->queryPoint,(size_t)(q->k));
+			//searchKnn
+			//(q->queryPoint, q->k);
+
+
+
+			while (!res.empty()) {
+				auto top = res.top();
+				if(res.size()==1){
+					nn0=Res(top.second, 1.0f - top.first);
+					// if(1.0f-top.first>nn0.inp){
+					// 	nn0=
+					// }
+				}
+				res.pop();
+				
+				q->resHeap.emplace(top.second, 1.0f - top.first);
+				while (q->resHeap.size() > q->k) q->resHeap.pop();
+
+				
+			}
+
+			ep_id=interEdges[nn0.id];
 		}
 
 		while (!q->resHeap.empty()) {
