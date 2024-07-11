@@ -375,6 +375,9 @@ public:
 		timer.restart();
 
 		for (int i = parti.numChunks - 1; i >= 0; --i) {
+			if ((!q->resHeap.empty()) && q->resHeap.top().inp > 
+				q->norm * sqrt(parti.MaxLen[i])) break;
+
 			auto& appr_alg = apgs[i];
 			auto res = appr_alg->searchKnn(q->queryPoint, q->k);
 
