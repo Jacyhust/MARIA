@@ -32,7 +32,7 @@ std::unique_lock<std::mutex>* glock = nullptr;
 
 int main(int argc, char const* argv[])
 {
-	std::string dataset = "audio";
+	std::string dataset = "deep1m";
 	if (argc > 1) {
 		dataset = argv[1];
 	}

@@ -346,7 +346,7 @@ public:
 	}
 
 	void interConnect() {
-		interEdges.resize(N, -1);
+		interEdges.resize(N, 0);
 		
 		for (int i = 1; i < parti.numChunks; ++i) {
 			//apgs[i] = new hnsw(ips, parti.nums[i], M, ef);
