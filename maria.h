@@ -268,7 +268,7 @@ public:
 	int L;
 	// Dimension of the hash table
 	int K;
-
+	std::vector<int> orders_in_Parti;
 	Partition parti;
 	Preprocess* prep = nullptr;
 	IpSpace* ips = nullptr;
@@ -296,7 +296,7 @@ public:
 		apgs = new hnsw * [parti.numChunks];
 		size_t report_every = N / 20;
 		if (report_every > 1e5) report_every = 1e5;
-
+		orders_in_Parti.resize(N);
 		int j1 = 0;
 		for (int i = 0; i < parti.numChunks; ++i) {
 			apgs[i] = new hnsw(ips, parti.nums[i], M, ef);
@@ -321,6 +321,7 @@ public:
 					}
 				}
 				j2 = parti.EachParti[i][k];
+				orders_in_Parti[j2] = k;
 				float* data = prep->data.val[j2];
 				appr_alg->addPoint((void*)(data), (size_t)j2);
 			}
@@ -346,6 +347,7 @@ public:
 
 	void interConnect() {
 		interEdges.resize(N, -1);
+		
 		for (int i = 1; i < parti.numChunks; ++i) {
 			//apgs[i] = new hnsw(ips, parti.nums[i], M, ef);
 			auto& appr_alg = apgs[i - 1];
@@ -403,39 +405,48 @@ public:
 		lsh::timer timer;
 		timer.restart();
 
-		unsigned int ep_id=parti.EachParti[parti.numChunks - 1][0];
-
-		Res nn0=Res(-1,-FLT_MAX);
+		//unsigned int ep_id = parti.EachParti[parti.numChunks - 1][0];
+		unsigned int ep_id = 0;
+		Res nn0 = Res(-1, -FLT_MAX);
 
 		for (int i = parti.numChunks - 1; i >= 0; --i) {
 			if ((!q->resHeap.empty()) && q->resHeap.top().inp > 
 				q->norm * sqrt(parti.MaxLen[i])) break;
 
 			auto& appr_alg = apgs[i];
+			
+			if (ep_id >= appr_alg->max_elements_|| ep_id < 0) {
+				std::cerr << ep_id << "  Illegal id!\n";
+				exit(-1);
+			}
 			//auto res= appr_alg->searchKnn(q->queryPoint, q->k);
-			auto res = appr_alg->searchBaseLayerST<false>(ep_id,q->queryPoint,(size_t)(q->k));
+			auto res = appr_alg->searchBaseLayerST<false>(ep_id, q->queryPoint, (size_t)(q->k));
 			//searchKnn
 			//(q->queryPoint, q->k);
 
-
-
 			while (!res.empty()) {
 				auto top = res.top();
+				if (parti.chunks[appr_alg->getExternalLabel(top.second)] != i) {
+					std::cerr << "  Finding wrong points!\n";
+				}
 				if(res.size()==1){
-					nn0=Res(top.second, 1.0f - top.first);
+					nn0=Res(appr_alg->getExternalLabel(top.second), 1.0f - top.first);
 					// if(1.0f-top.first>nn0.inp){
 					// 	nn0=
 					// }
 				}
 				res.pop();
 				
-				q->resHeap.emplace(top.second, 1.0f - top.first);
+				q->resHeap.emplace(appr_alg->getExternalLabel(top.second), 1.0f - top.first);
 				while (q->resHeap.size() > q->k) q->resHeap.pop();
 
 				
 			}
 
-			ep_id=interEdges[nn0.id];
+			ep_id = interEdges[nn0.id];
+			ep_id = orders_in_Parti[ep_id];
+
+			
 		}
 
 		while (!q->resHeap.empty()) {

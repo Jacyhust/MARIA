@@ -55,7 +55,7 @@ public:
 	//The data size of each chunks
 	//nums[i]=j: i-th parti has j points
 	std::vector<int> nums;
-
+	
 	//The buckets by parti;
 	//EachParti[i][j]=k: k-th point is the j-th point in i-th parti
 	std::vector<std::vector<int>> EachParti;

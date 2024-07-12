@@ -33,29 +33,24 @@ namespace lsh
 				<< m_s2 << "|----|----|----|----|----|----|----|----|----|----|"
 				<< std::endl
 				<< m_s3;
-			if (!_expected_count)
-			{
+			if (!_expected_count){
 				_expected_count = 1;
 			}
 		}
-		int long operator += (int long increment)
-		{
+		int long operator += (int long increment){
 			if ((_count += increment) >= _next_tic_count)
 			{
 				display_tic();
 			}
 			return _count;
 		}
-		int long  operator ++ ()
-		{
+		int long  operator ++ (){
 			return operator += (1);
 		}
-		int long count() const
-		{
+		int long count() const{
 			return _count;
 		}
-		int long expected_count() const
-		{
+		int long expected_count() const{
 			return _expected_count;
 		}
 	private:
