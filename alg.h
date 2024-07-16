@@ -89,7 +89,7 @@ inline resOutput Alg0_maria(maria& maria, float c_, int m_, int k_, int L_, int 
 	
 	Performance<queryN> perform;
 	lsh::timer timer1;
-	int t=100;
+	int t=1;
 	lsh::progress_display pd(Qnum*t);
 	for (int j = 0; j < Qnum*t; j++)
 	{
@@ -133,7 +133,7 @@ inline resOutput Alg0_mariaV2(mariaV2& maria, float c_, int m_, int k_, int L_, 
 	//lsh::progress_display pd(Qnum);
 	Performance<queryN> perform;
 	lsh::timer timer1;
-	int t=100;
+	int t=1;
 	lsh::progress_display pd(Qnum*t);
 	for (int j = 0; j < Qnum*t; j++)
 	{
