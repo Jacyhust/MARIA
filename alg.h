@@ -17,6 +17,8 @@
 #include <cstring>
 #include <chrono>
 
+extern std::atomic<size_t> _G_COST;
+
 struct resOutput
 {
 	std::string algName;
@@ -90,6 +92,9 @@ inline resOutput Alg0_maria(maria& maria, float c_, int m_, int k_, int L_, int 
 	Performance<queryN> perform;
 	lsh::timer timer1;
 	int t=1;
+
+	size_t cost1=_G_COST;
+
 	lsh::progress_display pd(Qnum*t);
 	for (int j = 0; j < Qnum*t; j++)
 	{
@@ -108,6 +113,9 @@ inline resOutput Alg0_maria(maria& maria, float c_, int m_, int k_, int L_, int 
 	tm* ltm = new tm[1];
 	localtime_s(ltm, &now);
 
+
+	cost1=_G_COST-cost1;
+
 	resOutput res;
 	res.algName = "Maria";
 	res.L = -1;
@@ -116,7 +124,7 @@ inline resOutput Alg0_maria(maria& maria, float c_, int m_, int k_, int L_, int 
 	res.time = mean_time * 1000;
 	res.recall = ((float)perform.NN_num) / (perform.num * k_);
 	res.ratio = ((float)perform.ratio) / (perform.res_num);
-	res.cost = ((float)perform.cost) / ((long long)perform.num * (long long)maria.N);
+	res.cost = ((float)cost1) / ((long long)perform.num * (long long)maria.N);
 	res.kRatio = perform.kRatio / perform.num;
 	//delete[] ltm;
 	return res;

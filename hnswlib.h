@@ -32,6 +32,9 @@
 #include <vector>
 #include <iostream>
 #include <string.h>
+#include <atomic>
+
+extern std::atomic<size_t> _G_COST;
 
 namespace hnswlib {
     typedef size_t labeltype;
@@ -96,7 +99,7 @@ using DISTFUNC = MTYPE(*)(const void*, const void*, const void*);
 #include "basis.h"
 
 static float cal_inner_product_hnsw(const void* pVect1v, const void* pVect2v, const void* qty_ptr) {
-    //++cost;
+    ++_G_COST;
     float* pVect1 = (float*)pVect1v;
     float* pVect2 = (float*)pVect2v;
     size_t qty = *((size_t*)qty_ptr);

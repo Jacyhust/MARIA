@@ -18,7 +18,7 @@
 #include <algorithm>
 extern std::unique_lock<std::mutex>* glock;
 //#define COUNT_CC
-extern std::atomic<size_t> cost;
+extern std::atomic<size_t> _G_COST;
 #if defined(unix) || defined(__unix__)
 inline int fopen_s(FILE** pFile, const char* path, const char* mode)
 {
@@ -1394,7 +1394,7 @@ namespace hnswlib {
             fopen_s(&fp, fname.c_str(), "a");
             if (metric_distance_computations) {
                 printf("dist=%f, cnt=%f, unique=%d, Dcnt=%f, Recall=%f\ncc=%f,cc1=%f\n\n", res / cnt1, avgD, (int)f, derivation, (float)rec / cnt1,
-                    (float)metric_distance_computations / N, (float)cost / N);
+                    (float)metric_distance_computations / N, (float)_G_COST / N);
                 if (fp) fprintf(fp, "dist=%f, cnt=%f, unique=%d, Dcnt=%f, Recall=%f\ncc=%f, IndexingTime=%f\n\n", res / cnt1, avgD, (int)f, derivation, (float)rec / cnt1,
                     (float)metric_distance_computations / N, indexingTime);
 

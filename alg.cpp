@@ -1,5 +1,7 @@
 #include "alg.h"
 
+std::atomic<size_t> _G_COST=0;
+
 #if defined(unix) || defined(__unix__)
 //std::string data_fold = "/home/xizhao/dataset/", index_fold = " ";
 std::string data_fold = "/home/xizhao/dataset/", index_fold = " ";
