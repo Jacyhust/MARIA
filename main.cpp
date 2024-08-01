@@ -32,7 +32,7 @@ std::unique_lock<std::mutex>* glock = nullptr;
 
 int main(int argc, char const* argv[])
 {
-	std::string dataset = "deep1m";
+	std::string dataset = "audio";
 	if (argc > 1) {
 		dataset = argv[1];
 	}
@@ -59,17 +59,18 @@ int main(int argc, char const* argv[])
 	Partition parti(c, prep);
 	// mf_alsh::Hash myslsh(prep, param, index_fold.append(argvStr[2]), parti, data_fold2 + "MyfunctionXTheta.data");
 	// myHNSW hnsw(prep, param, index_fold.append(argvStr[2]), parti, data_fold2 + "MyfunctionXTheta.data");
-	mariaV2 maria2(prep, param, index_fold.append(argvStr[2]), parti, data_fold2 + "MyfunctionXTheta.data");
+	//mariaV2 maria2(prep, param, index_fold.append(argvStr[2]), parti, data_fold2 + "MyfunctionXTheta.data");
 	
 	maria maria(prep, param, index_fold.append(argvStr[2]), parti, data_fold2 + "MyfunctionXTheta.data");
 
+	mariaV3 maria3(prep, param, index_fold.append(argvStr[2]), parti, data_fold2 + "MyfunctionXTheta.data");
 	
 
 	std::vector<int> ms = { 0,100,200,400,800,1200,1600,3200,6400};
 	//ms = { 100 };
-	res.push_back(Alg0_mariaV2(maria2, c, 100, k, L, K, prep));
+	//res.push_back(Alg0_mariaV2(maria2, c, 100, k, L, K, prep));
 	res.push_back(Alg0_maria(maria, c, 100, k, L, K, prep));
-	
+	res.push_back(Alg0_maria(maria3, c, 100, k, L, K, prep));
 	// for (auto& x : ms) {
 	// 	m = x + k;
 	// 	res.push_back(Alg0_mfalsh(myslsh, c, m, k, L, K, prep));

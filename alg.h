@@ -80,7 +80,8 @@ inline resOutput Alg0_mfalsh(mf_alsh::Hash& myslsh, float c_, int m_, int k_, in
 	return res;
 }
 
-inline resOutput Alg0_maria(maria& maria, float c_, int m_, int k_, int L_, int K_, Preprocess& prep)
+template <typename mariaVx>
+inline resOutput Alg0_maria(mariaVx& maria, float c_, int m_, int k_, int L_, int K_, Preprocess& prep)
 {
 	std::string query_result = ("results/MF_ALSH_result.csv");
 
@@ -93,7 +94,7 @@ inline resOutput Alg0_maria(maria& maria, float c_, int m_, int k_, int L_, int 
 	lsh::timer timer1;
 	int t=1;
 
-	size_t cost1=_G_COST;
+	size_t cost1 = _G_COST;
 
 	lsh::progress_display pd(Qnum*t);
 	for (int j = 0; j < Qnum*t; j++)
@@ -114,7 +115,7 @@ inline resOutput Alg0_maria(maria& maria, float c_, int m_, int k_, int L_, int 
 	localtime_s(ltm, &now);
 
 
-	cost1=_G_COST-cost1;
+	cost1 = _G_COST - cost1;
 
 	resOutput res;
 	res.algName = "Maria";
@@ -124,7 +125,8 @@ inline resOutput Alg0_maria(maria& maria, float c_, int m_, int k_, int L_, int 
 	res.time = mean_time * 1000;
 	res.recall = ((float)perform.NN_num) / (perform.num * k_);
 	res.ratio = ((float)perform.ratio) / (perform.res_num);
-	res.cost = ((float)cost1) / ((long long)perform.num * (long long)maria.N);
+	//res.cost = ((float)cost1) / ((long long)perform.num * (long long)maria.N);
+	res.cost = ((float)cost1) / ((long long)perform.num);
 	res.kRatio = perform.kRatio / perform.num;
 	//delete[] ltm;
 	return res;
@@ -142,6 +144,7 @@ inline resOutput Alg0_mariaV2(mariaV2& maria, float c_, int m_, int k_, int L_, 
 	Performance<queryN> perform;
 	lsh::timer timer1;
 	int t=1;
+	size_t cost1 = _G_COST;
 	lsh::progress_display pd(Qnum*t);
 	for (int j = 0; j < Qnum*t; j++)
 	{
@@ -160,6 +163,8 @@ inline resOutput Alg0_mariaV2(mariaV2& maria, float c_, int m_, int k_, int L_, 
 	tm* ltm = new tm[1];
 	localtime_s(ltm, &now);
 
+	cost1 = _G_COST - cost1;
+
 	resOutput res;
 	res.algName = "MariaV2";
 	res.L = -1;
@@ -168,7 +173,7 @@ inline resOutput Alg0_mariaV2(mariaV2& maria, float c_, int m_, int k_, int L_, 
 	res.time = mean_time * 1000;
 	res.recall = ((float)perform.NN_num) / (perform.num * k_);
 	res.ratio = ((float)perform.ratio) / (perform.res_num);
-	res.cost = ((float)perform.cost) / ((long long)perform.num * (long long)maria.N);
+	res.cost = ((float)cost1) / ((long long)perform.num);
 	res.kRatio = perform.kRatio / perform.num;
 	//delete[] ltm;
 	return res;
