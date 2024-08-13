@@ -360,7 +360,6 @@ Parameter::Parameter(Preprocess& prep, float c_, float S0)
 	L = (int)floor(pow((double)N, rho)) + 1;
 	S = L * K;
 
-	
 }
 
 inline float normal_pdf0(			// pdf of Guassian(mean, std)

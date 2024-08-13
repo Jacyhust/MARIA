@@ -591,7 +591,7 @@ public:
 			while (!res.empty()) {
 				auto top = res.top();
 				res.pop();
-				q->resHeap.emplace(top.second, 1.0-top.first);
+				q->resHeap.emplace(top.second, 1.0 - top.first);
 				while (q->resHeap.size() > q->k) q->resHeap.pop();
 			}
 
