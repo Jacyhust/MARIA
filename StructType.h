@@ -8,6 +8,9 @@ struct Data
 	int N;
 	// Data matrix
 	float** val;
+
+	// No safety checking!!!
+	float*& operator[](int i) { return val[i]; }
 };
 
 struct Ben

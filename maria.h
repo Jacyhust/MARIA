@@ -20,6 +20,7 @@ public:
 	// Dimension of the hash table
 	int K;
 
+	std::string alg_name = "maria";
 	//float** hashval;
 	Partition parti;
 	Preprocess* prep = nullptr;
@@ -109,7 +110,7 @@ public:
 		timer.restart();
 	
 		for (int i = parti.numChunks - 1; i >= 0; --i) {
-			if ((!q->resHeap.empty()) && q->resHeap.top().inp > 
+			if ((!q->resHeap.empty()) && q->resHeap.top().dist > 
 				q->norm * sqrt(parti.MaxLen[i])) break;
 
 
@@ -134,7 +135,7 @@ public:
 		while (!q->resHeap.empty()) {
 			auto top = q->resHeap.top();
 			q->resHeap.pop();
-			q->res.emplace_back(top.id, top.inp);
+			q->res.emplace_back(top.id, top.dist);
 		}
 		
 		std::reverse(q->res.begin(), q->res.end());
@@ -167,6 +168,9 @@ public:
 	int L;
 	// Dimension of the hash table
 	int K;
+
+	std::string alg_name = "hnsw";
+
 	myHNSW(Preprocess& prep_, Parameter& param_, const std::string& file, Partition& part_, const std::string& funtable){
 		N = param_.N;
 		dim = param_.dim;
@@ -241,7 +245,7 @@ public:
 			auto top = q->resHeap.top();
 			q->resHeap.pop();
 
-			q->res.emplace_back(top.id, top.inp);
+			q->res.emplace_back(top.id, top.dist);
 		}
 
 		std::reverse(q->res.begin(), q->res.end());
@@ -275,7 +279,7 @@ public:
 	hnsw** apgs = nullptr;
 
 	std::vector<int> interEdges;
-
+	std::string alg_name = "mariaV2";
 public:
 	mariaV2(Preprocess& prep_, Parameter& param_, const std::string& file, Partition& part_, const std::string& funtable) :parti(part_) {
 		N = param_.N;
@@ -375,7 +379,7 @@ public:
 		timer.restart();
 
 		for (int i = parti.numChunks - 1; i >= 0; --i) {
-			if ((!q->resHeap.empty()) && q->resHeap.top().inp > 
+			if ((!q->resHeap.empty()) && q->resHeap.top().dist > 
 				q->norm * sqrt(parti.MaxLen[i])) break;
 
 			auto& appr_alg = apgs[i];
@@ -393,7 +397,7 @@ public:
 			auto top = q->resHeap.top();
 			q->resHeap.pop();
 
-			q->res.emplace_back(top.id, top.inp);
+			q->res.emplace_back(top.id, top.dist);
 		}
 
 		std::reverse(q->res.begin(), q->res.end());
@@ -410,7 +414,7 @@ public:
 		Res nn0 = Res(-1, -FLT_MAX);
 
 		for (int i = parti.numChunks - 1; i >= 0; --i) {
-			if ((!q->resHeap.empty()) && q->resHeap.top().inp > 
+			if ((!q->resHeap.empty()) && q->resHeap.top().dist > 
 				q->norm * sqrt(parti.MaxLen[i])) break;
 
 			auto& appr_alg = apgs[i];
@@ -431,7 +435,7 @@ public:
 				}
 				if(res.size()==1){
 					nn0=Res(appr_alg->getExternalLabel(top.second), 1.0f - top.first);
-					// if(1.0f-top.first>nn0.inp){
+					// if(1.0f-top.first>nn0.dist){
 					// 	nn0=
 					// }
 				}
@@ -453,7 +457,7 @@ public:
 			auto top = q->resHeap.top();
 			q->resHeap.pop();
 
-			q->res.emplace_back(top.id, top.inp);
+			q->res.emplace_back(top.id, top.dist);
 		}
 
 		std::reverse(q->res.begin(), q->res.end());
@@ -503,6 +507,7 @@ public:
 	//float** phi;
 
 	//void load_funtable(const std::string& file);
+	std::string alg_name = "mariaV3";
 public:
 	mariaV3(Preprocess& prep_, Parameter& param_, const std::string& file, Partition& part_, const std::string& funtable) :parti(part_) {
 		N = param_.N;
@@ -575,7 +580,7 @@ public:
 		timer.restart();
 
 		for (int i = parti.numChunks - 1; i >= 0; --i) {
-			if ((!q->resHeap.empty()) && q->resHeap.top().inp >
+			if ((!q->resHeap.empty()) && q->resHeap.top().dist >
 				q->norm * sqrt(parti.MaxLen[i])) break;
 
 
@@ -601,7 +606,7 @@ public:
 		while (!q->resHeap.empty()) {
 			auto top = q->resHeap.top();
 			q->resHeap.pop();
-			q->res.emplace_back(top.id, top.inp);
+			q->res.emplace_back(top.id, top.dist);
 		}
 
 		std::reverse(q->res.begin(), q->res.end());

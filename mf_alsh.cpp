@@ -212,7 +212,7 @@ Hash::~Hash()
 
 Query::Query(int id, float c_, int k_, Hash& hash, Preprocess& prep, int ub_)
 {
-	flag = id;
+	qid = id;
 	c = c_;
 	k = k_;
 	UB = ub_;
@@ -234,7 +234,7 @@ Query::Query(int id, float c_, int k_, Hash& hash, Preprocess& prep, int ub_)
 
 void Query::cal_hash(Hash& hash, Preprocess& prep)
 {
-	query_point = mydata[flag];
+	query_point = mydata[qid];
 	norm = 0;
 	for (int i = 0; i < dim; ++i) {
 		norm += query_point[i] * query_point[i];
@@ -307,13 +307,13 @@ void Query::siftF(Hash& hash, Preprocess& prep)
 			for (int j = 0; j < num_cand; j++){
 				int& x = hash.parti.EachParti[t][j];
 				res_PQ[size].id = x;
-				res_PQ[size].inp = cal_inner_product(mydata[x], query_point, dim);
+				res_PQ[size].dist = cal_inner_product(mydata[x], query_point, dim);
 				costs[t]++;
 				if (size < UB) {
 					size++;
 					std::push_heap(res_PQ, res_PQ + size);
 				}
-				else if(res_PQ[0].inp < res_PQ[size].inp){
+				else if(res_PQ[0].dist < res_PQ[size].dist){
 					size++;
 					std::push_heap(res_PQ, res_PQ + size);
 					std::pop_heap(res_PQ, res_PQ + size);
@@ -326,7 +326,7 @@ void Query::siftF(Hash& hash, Preprocess& prep)
 			knnF(res_PQ, hash, prep, hash.myIndexes[t], flag_, size);
 		}
 		
-		if (size == UB) inp_LB = res_PQ[0].inp;
+		if (size == UB) inp_LB = res_PQ[0].dist;
 	}
 
 	res.clear();
@@ -355,26 +355,26 @@ void Query::knnF(Res* res_PQ,
 {
 	int cnt = 0;
 	float inpK = -1.0f;
-	if (size == UB) inpK = res_PQ[0].inp;
+	if (size == UB) inpK = res_PQ[0].dist;
 	float Max_inp = this->norm * sqrt(hash.parti.MaxLen[chunks]);
 
 	for (int i = 0; i < hash.L; i++) {
 		for (auto& x : table[i][keys[i]]) {
 			if (flag_[x] == false){
 				res_PQ[size].id = x;
-				res_PQ[size].inp = cal_inner_product(mydata[x], query_point, dim);
+				res_PQ[size].dist = cal_inner_product(mydata[x], query_point, dim);
 				cnt++;
 				costs[chunks]++;
 				if (size < UB) {
 					size++;
 					std::push_heap(res_PQ, res_PQ + size);
 				}
-				else if (res_PQ[0].inp < res_PQ[size].inp) {
+				else if (res_PQ[0].dist < res_PQ[size].dist) {
 					size++;
 					std::push_heap(res_PQ, res_PQ + size);
 					std::pop_heap(res_PQ, res_PQ + size);
 					size--;
-					inpK = res_PQ[0].inp;
+					inpK = res_PQ[0].dist;
 				}
 				flag_[x] = true;
 			}
@@ -420,19 +420,19 @@ void Query::knnF(Res* res_PQ,
 		for (auto& x : table[ip1.table_id][ip1.key]) {
 			if (flag_[x] == false) {
 				res_PQ[size].id = x;
-				res_PQ[size].inp = cal_inner_product(mydata[x], query_point, dim);
+				res_PQ[size].dist = cal_inner_product(mydata[x], query_point, dim);
 				cnt++;
 				costs[chunks]++;
 				if (size < UB) {
 					size++;
 					std::push_heap(res_PQ, res_PQ + size);
 				}
-				else if (res_PQ[0].inp < res_PQ[size].inp) {
+				else if (res_PQ[0].dist < res_PQ[size].dist) {
 					size++;
 					std::push_heap(res_PQ, res_PQ + size);
 					std::pop_heap(res_PQ, res_PQ + size);
 					size--;
-					inpK = res_PQ[0].inp;
+					inpK = res_PQ[0].dist;
 				}
 				flag_[x] = true;
 			}

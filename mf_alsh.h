@@ -49,12 +49,12 @@ namespace mf_alsh
 
 	struct Res//the result of knns
 	{
-		float inp;
+		float dist;
 		int id;
 		Res() = default;
-		Res(int id_, float inp_):id(id_), inp(inp_) {}
+		Res(int id_, float inp_):id(id_), dist(inp_) {}
 		bool operator < (const Res& rhs) const {
-			return inp > rhs.inp;
+			return dist > rhs.dist;
 		}
 	};
 
@@ -183,7 +183,7 @@ namespace mf_alsh
 		// k-NN
 		int k;
 		// Indice of query point in dataset. Be equal to -1 if the query point isn't in the dataset.
-		int flag;
+		int qid;
 		//
 		float norm;
 		//

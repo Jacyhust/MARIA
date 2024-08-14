@@ -52,8 +52,9 @@ void Preprocess::load_data(const std::string& path)
 	for (int i = 0; i < data.N; ++i) {
 		data.val[i] = new float[data.dim + 1];
 		in.read((char*)data.val[i], sizeof(float) * header[2]);
+		data.val[i][data.dim - 1] = 0.0f;
 	}
-
+	
 	std::cout << "Load from new file: " << file << "\n";
 	std::cout << "N=    " << data.N << "\n";
 	std::cout << "dim=  " << data.dim << "\n\n";

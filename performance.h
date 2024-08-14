@@ -82,13 +82,13 @@ void Performance<Query>::update(Query& query, Preprocess& prep)
 
 	for (int j = 0; j < num0; j++)
 	{
-		float rate = query.res[j].inp / prep.benchmark.innerproduct[query.flag][j];
+		float rate = query.res[j].dist / prep.benchmark.innerproduct[query.qid][j];
 		ratio += rate;
 
 		if(j==num0-1) kRatio+=rate;
 
 		set1.insert(query.res[j].id);
-		set2.insert((int)prep.benchmark.indice[query.flag][j]);
+		set2.insert((int)prep.benchmark.indice[query.qid][j]);
 	}
 	std::set_intersection(set1.begin(), set1.end(), set2.begin(), set2.end(),
 		std::back_inserter(set_intersection));

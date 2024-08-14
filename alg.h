@@ -4,6 +4,7 @@
 #include "mf_alsh.h"
 #include "performance.h"
 #include "basis.h"
+#include "hcnngLite.h"
 // #include "hnswlib.h"
 #include "maria.h"
 #include <iostream>
@@ -92,14 +93,14 @@ inline resOutput Alg0_maria(mariaVx& maria, float c_, int m_, int k_, int L_, in
 	
 	Performance<queryN> perform;
 	lsh::timer timer1;
-	int t=1;
+	int t = 1;
 
 	size_t cost1 = _G_COST;
 
 	lsh::progress_display pd(Qnum*t);
 	for (int j = 0; j < Qnum*t; j++)
 	{
-		queryN query(j/t, c_, k_, prep, m_);
+		queryN query(j / t, c_, k_, prep, m_);
 		maria.knn(&query);
 		perform.update(query, prep);
 		++pd;
@@ -118,7 +119,7 @@ inline resOutput Alg0_maria(mariaVx& maria, float c_, int m_, int k_, int L_, in
 	cost1 = _G_COST - cost1;
 
 	resOutput res;
-	res.algName = "Maria";
+	res.algName = maria.alg_name;
 	res.L = -1;
 	res.K = m_;
 	res.c = c_;

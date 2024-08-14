@@ -10,6 +10,7 @@
 #include <algorithm>
 #include "fastL2_ip.h"
 #include <chrono>
+
 namespace lsh
 {
 	class progress_display
@@ -117,4 +118,8 @@ void clear_2d_array(T** array, int n)
 		delete[] array[i];
 	}
 	delete[] array;
+}
+
+inline float calInnerProductReverse(float* v1, float* v2, int dim) {
+	return -cal_inner_product(v1, v2, dim);
 }

@@ -102,12 +102,15 @@ public:
 
 struct Res//the result of knns
 {
-	float inp = 0.0f;
+	//dist can be:
+	//1. L2-distance
+	//2. The opposite number of inner product
+	float dist = 0.0f;
 	int id = -1;
 	Res() = default;
-	Res(int id_, float inp_) :id(id_), inp(inp_) {}
+	Res(int id_, float inp_) :id(id_), dist(inp_) {}
 	bool operator < (const Res& rhs) const {
-		return inp > rhs.inp;
+		return dist < rhs.dist;
 	}
 };
 
@@ -139,7 +142,7 @@ public:
 	// k-NN
 	unsigned k = 1;
 	// Indice of query point in dataset. Be equal to -1 if the query point isn't in the dataset.
-	unsigned flag = -1;
+	unsigned qid = -1;
 
 	float beta = 0;
 	float norm = 0.0f;
@@ -164,7 +167,7 @@ public:
 
 public:
 	queryN(unsigned id, float c_, unsigned k_, Preprocess& prep, float beta_) {
-		flag = id;
+		qid = id;
 		c = c_;
 		k = k_;
 		beta = beta_;
