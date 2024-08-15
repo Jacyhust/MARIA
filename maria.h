@@ -110,7 +110,7 @@ public:
 		timer.restart();
 	
 		for (int i = parti.numChunks - 1; i >= 0; --i) {
-			if ((!q->resHeap.empty()) && q->resHeap.top().dist > 
+			if ((!q->resHeap.empty()) && (1.0f-q->resHeap.top().dist) > 
 				q->norm * sqrt(parti.MaxLen[i])) break;
 
 
@@ -125,7 +125,7 @@ public:
 			while (!res.empty()) {
 				auto top = res.top();
 				res.pop();
-				q->resHeap.emplace(top.second, 1.0f - top.first);
+				q->resHeap.emplace(top.second, top.first);
 				while (q->resHeap.size() > q->k) q->resHeap.pop();
 			}
 
@@ -135,7 +135,7 @@ public:
 		while (!q->resHeap.empty()) {
 			auto top = q->resHeap.top();
 			q->resHeap.pop();
-			q->res.emplace_back(top.id, top.dist);
+			q->res.emplace_back(top.id, 1.0-top.dist);
 		}
 		
 		std::reverse(q->res.begin(), q->res.end());
@@ -237,7 +237,7 @@ public:
 		while (!res.empty()) {
 			auto top = res.top();
 			res.pop();
-			q->resHeap.emplace(top.second, 1.0f - top.first);
+			q->resHeap.emplace(top.second, top.first);
 			while (q->resHeap.size() > q->k) q->resHeap.pop();
 		}
 
@@ -245,7 +245,7 @@ public:
 			auto top = q->resHeap.top();
 			q->resHeap.pop();
 
-			q->res.emplace_back(top.id, top.dist);
+			q->res.emplace_back(top.id, 1.0-top.dist);
 		}
 
 		std::reverse(q->res.begin(), q->res.end());
@@ -434,14 +434,14 @@ public:
 					std::cerr << "  Finding wrong points!\n";
 				}
 				if(res.size()==1){
-					nn0=Res(appr_alg->getExternalLabel(top.second), 1.0f - top.first);
+					nn0=Res(appr_alg->getExternalLabel(top.second), top.first);
 					// if(1.0f-top.first>nn0.dist){
 					// 	nn0=
 					// }
 				}
 				res.pop();
 				
-				q->resHeap.emplace(appr_alg->getExternalLabel(top.second), 1.0f - top.first);
+				q->resHeap.emplace(appr_alg->getExternalLabel(top.second), top.first);
 				while (q->resHeap.size() > q->k) q->resHeap.pop();
 
 				
@@ -457,7 +457,7 @@ public:
 			auto top = q->resHeap.top();
 			q->resHeap.pop();
 
-			q->res.emplace_back(top.id, top.dist);
+			q->res.emplace_back(top.id, 1.0-top.dist);
 		}
 
 		std::reverse(q->res.begin(), q->res.end());
@@ -596,7 +596,7 @@ public:
 			while (!res.empty()) {
 				auto top = res.top();
 				res.pop();
-				q->resHeap.emplace(top.second, 1.0 - top.first);
+				q->resHeap.emplace(top.second, top.first);
 				while (q->resHeap.size() > q->k) q->resHeap.pop();
 			}
 

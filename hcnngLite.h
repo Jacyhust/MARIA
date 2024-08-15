@@ -9,8 +9,10 @@
 #include <time.h>
 #include <thread>
 #include <unordered_set>
-
 #include <set>
+
+#include "patch_ubuntu.h"
+
 extern std::atomic<size_t> _G_COST;
 
 namespace hcnngLite {
@@ -283,11 +285,6 @@ namespace hcnngLite {
 			}
 
 			return p;
-			//dx.clear();
-			//dy.clear();
-			//taken.clear();
-			//std::vector<std::pair<float, int> >().swap(dx);
-			//std::vector<std::pair<float, int> >().swap(dy);
 		}
 
 		void createLargeCluster(int* idx_points, int left, int right, std::vector<pii>& pairs) {

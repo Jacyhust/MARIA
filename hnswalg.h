@@ -19,13 +19,15 @@
 extern std::unique_lock<std::mutex>* glock;
 //#define COUNT_CC
 extern std::atomic<size_t> _G_COST;
-#if defined(unix) || defined(__unix__)
-inline int fopen_s(FILE** pFile, const char* path, const char* mode)
-{
-    if ((*pFile = fopen64(path, mode)) == NULL) return 0;
-    else return 1;
-}
-#endif
+
+#include "patch_ubuntu.h"
+//#if defined(unix) || defined(__unix__)
+// static int fopen_s(FILE** pFile, const char* path, const char* mode)
+// {
+//     if ((*pFile = fopen64(path, mode)) == NULL) return 0;
+//     else return 1;
+// }
+// #endif
 
 namespace hnswlib {
     typedef unsigned int tableint;

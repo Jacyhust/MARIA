@@ -59,6 +59,7 @@ int main(int argc, char const* argv[])
 	Partition parti(c, prep);
 	// mf_alsh::Hash myslsh(prep, param, index_fold.append(argvStr[2]), parti, data_fold2 + "MyfunctionXTheta.data");
 	myHNSW hnsw(prep, param, index_fold.append(argvStr[2]), parti, data_fold2 + "MyfunctionXTheta.data");
+	hnsw.setEf(500);
 	mariaV2 maria2(prep, param, index_fold.append(argvStr[2]), parti, data_fold2 + "MyfunctionXTheta.data");
 	
 	maria maria(prep, param, index_fold.append(argvStr[2]), parti, data_fold2 + "MyfunctionXTheta.data");
@@ -77,6 +78,7 @@ int main(int argc, char const* argv[])
 	std::vector<int> ms = { 0,100,200,400,800,1200,1600,3200,6400};
 	//ms = { 100 };
 	res.push_back(Alg0_mariaV2(maria2, c, 100, k, L, K, prep));
+	res.push_back(Alg0_maria(hnsw, c, 1000, k, L, K, prep));
 	res.push_back(Alg0_maria(maria, c, 100, k, L, K, prep));
 	res.push_back(Alg0_maria(maria3, c, 100, k, L, K, prep));
 	// for (auto& x : ms) {
