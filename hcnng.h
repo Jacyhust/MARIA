@@ -271,7 +271,7 @@ namespace hcnnglib {
 	};
 
 	inline float dist_L2(float* x, float* y, int n) {
-		++_G_COST;
+		//++_G_COST;
 		return sqrt(cal_L2sqr(x, y, n));
 		float d = 0;
 		for (int i = 0; i < n; i++)
@@ -463,45 +463,6 @@ namespace hcnnglib {
 			return new_graph;
 		}
 
-		/*inline vector<vector<int> > read_ivecs(string path_file, int& N, int& Dim) {
-			vector<vector<int> > data;
-			FILE* F;
-			F = fopen(path_file.c_str(), "rb");
-			if (F == NULL) {
-				printf("Dataset not found\n");
-				exit(0);
-			}
-			int xxx = fread(&Dim, sizeof(int), 1, F);
-			long int sizebytes = fsize(F);
-			N = sizebytes / (sizeof(int) * (Dim + 1));
-			rewind(F);
-			for (int i = 0; i < N; i++) {
-				xxx = fread(&Dim, sizeof(int), 1, F);
-				int* nn = new int[Dim];
-				xxx = fread(nn, sizeof(int), Dim, F);
-				data.push_back(vector<int>(nn, nn + Dim));
-				delete[] nn;
-			}
-			fclose(F);
-			return data;
-		}
-
-		inline void write_ivecs(string path_file, vector<vector<int>>& GT) {
-			FILE* F;
-			int N;
-			F = fopen(path_file.c_str(), "wb");
-			N = GT.size();
-			for (int i = 0; i < N; i++) {
-				int K = GT[i].size();
-				fwrite(&K, sizeof(int), 1, F);
-				int* aux = new int[K];
-				for (int j = 0; j < K; j++)
-					aux[j] = GT[i][j];
-				fwrite(aux, sizeof(int), K, F);
-				delete[] aux;
-			}
-			fclose(F);
-		}*/
 
 		inline vector<int> get_sizeadj(Graph& G) {
 			vector<int> NE(G.size());
@@ -829,7 +790,7 @@ namespace hcnnglib {
 			Graph mst;
 			full.reserve(N * (N - 1));
 			for (int i = 0; i < N; i++) {
-				for (int j = 0; j < N; j++)
+				for (int j = i; j < N; j++)
 					if (i != j)
 						full.push_back(Edge(i, j, dist_L2(points[idx_points[left + i]], points[idx_points[left + j]], points.cols)));
 			}
@@ -1034,6 +995,7 @@ namespace hcnnglib {
 				}
 			}
 
+			std::cout << "LC cost: " << _G_COST << std::endl;
 			printf("\n\nBuilding...\n");
 			pd = new lsh::progress_display((size_t)N * (size_t)num_cl);
 #pragma omp parallel for

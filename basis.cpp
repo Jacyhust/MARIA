@@ -1,8 +1,10 @@
 #include "basis.h"
 #include "distances_simd_avx512.h"
+extern std::atomic<size_t> _G_COST;
 
 float cal_inner_product(float* v1, float* v2, int dim)
 {
+	++_G_COST;
 #ifdef __AVX2__
 	return faiss::fvec_inner_product_avx512(v1, v2, dim);
 #else
@@ -19,6 +21,7 @@ float cal_inner_product(float* v1, float* v2, int dim)
 
 float cal_L2sqr(float* v1, float* v2, int dim)
 {
+	++_G_COST;
 #ifdef __AVX2__
 	return (faiss::fvec_L2sqr_avx512(v1, v2, dim));
 #else

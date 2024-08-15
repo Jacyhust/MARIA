@@ -45,10 +45,21 @@ void Preprocess::load_data(const std::string& path)
 	assert(sizeof header == 3 * 4);
 	in.read((char*)header, sizeof(header));
 	assert(header[1] != 0);
-	data.N = header[1];
+	data.N = header[1] - 200;
 	data.dim = header[2];
 
+	queries.N = 200;
+	queries.dim = data.dim;
+
+	queries.val = new float* [queries.N];
 	data.val = new float* [data.N];
+
+	for (int i = 0; i < queries.N; ++i) {
+		queries.val[i] = new float[queries.dim + 1];
+		in.read((char*)queries.val[i], sizeof(float) * header[2]);
+		queries.val[i][queries.dim - 1] = 0.0f;
+	}
+
 	for (int i = 0; i < data.N; ++i) {
 		data.val[i] = new float[data.dim + 1];
 		in.read((char*)data.val[i], sizeof(float) * header[2]);
@@ -56,7 +67,8 @@ void Preprocess::load_data(const std::string& path)
 	}
 	
 	std::cout << "Load from new file: " << file << "\n";
-	std::cout << "N=    " << data.N << "\n";
+	std::cout << "Nq =  " << queries.N << "\n";
+	std::cout << "N  =  " << data.N << "\n";
 	std::cout << "dim=  " << data.dim << "\n\n";
 
 	in.close();

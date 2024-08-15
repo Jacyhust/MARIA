@@ -11,6 +11,7 @@ class Preprocess
 {
 public:
 	Data data;
+	Data queries;
 	float* SquareLen;
 	Ben benchmark;
 	float MaxLen;
@@ -128,7 +129,7 @@ public:
 
 	float* queryPoint = NULL;
 	float* hashval = NULL;
-	float** myData = NULL;
+	//float** myData = NULL;
 	int dim = 1;
 
 	int UB = 0;
@@ -171,13 +172,9 @@ public:
 		c = c_;
 		k = k_;
 		beta = beta_;
-		myData = prep.data.val;
+		//myData = prep.data.val;
 		dim = prep.data.dim + 1;
-		queryPoint = new float[dim];
-		for (int i = 0; i < dim - 1; ++i) {
-			queryPoint[i] = myData[id][i];
-		}
-		queryPoint[dim - 1] = 0.0f;
+		queryPoint = prep.queries[id];
 
 		norm = sqrt(cal_inner_product(queryPoint, queryPoint, dim));
 		//search();
@@ -187,6 +184,6 @@ public:
 
 	~queryN() { 
 		delete hashval; 
-		delete queryPoint;
+		//delete queryPoint;
 	}
 };

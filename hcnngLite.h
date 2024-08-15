@@ -166,6 +166,7 @@ namespace hcnngLite {
 				omp_init_lock(&locks[i]);
 				G[i].reserve(max_mst_degree * num_cl);
 			}
+			
 			printf("creating clusters...\n");
 
 			std::vector<std::vector<pii>> tps(num_cl);
@@ -199,7 +200,7 @@ namespace hcnngLite {
 					partis.emplace_back(i, x);
 				}
 			}
-
+			std::cout << "LC cost: " << _G_COST << std::endl;
 			printf("\n\nBuilding...\n");
 			pd = new lsh::progress_display((size_t)N * (size_t)num_cl);
 #pragma omp parallel for
@@ -270,7 +271,7 @@ namespace hcnngLite {
 				}
 				else {
 					if (j < num_points) {
-						if (taken.find(dy[i].second) == taken.end()) {
+						if (taken.find(dy[j].second) == taken.end()) {//BUG24.08.15: Write dy[j] as dy[i] !!!
 							idx_points[q] = dy[j].second;
 							taken.insert(dy[j].second);
 							q--;
@@ -283,6 +284,12 @@ namespace hcnngLite {
 					}
 				}
 			}
+
+			//dx.clear();
+			//dy.clear();
+			//taken.clear();
+			//std::vector<std::pair<float, int> >().swap(dx);
+			//std::vector<std::pair<float, int> >().swap(dy);
 
 			return p;
 		}
@@ -362,10 +369,12 @@ namespace hcnngLite {
 
 					omp_set_lock(&locks[p1]);
 					if (!check_in_neighbors(p2, graph[p1])) graph[p1].emplace_back(p2,e.weight);
+					mst_degrees[p1]++;
 					omp_unset_lock(&locks[p1]);
 
 					omp_set_lock(&locks[p2]);
 					if (!check_in_neighbors(p1, graph[p2])) graph[p2].emplace_back(p1, e.weight);
+					mst_degrees[p2]++;
 					omp_unset_lock(&locks[p2]);
 
 					//MST[e.v1].push_back(e);
