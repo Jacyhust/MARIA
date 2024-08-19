@@ -32,7 +32,7 @@ std::unique_lock<std::mutex>* glock = nullptr;
 
 int main(int argc, char const* argv[])
 {
-	std::string dataset = "mnist";
+	std::string dataset = "tiny5m";
 	if (argc > 1) {
 		dataset = argv[1];
 	}
@@ -66,7 +66,7 @@ int main(int argc, char const* argv[])
 
 	// mariaV3 maria3(prep, param, index_fold.append(argvStr[2]), parti, data_fold2 + "MyfunctionXTheta.data");
 	
-	int minsize_cl = 1500;
+	int minsize_cl = 500;
 	int num_cl = 10;
 	int max_mst_degree = 3;
 	//hcnngLite::hcnng<calInnerProductReverse>(dataset, prep.data, data_fold2 + argvStr[2] + "_hcnng", "index_result.txt", minsize_cl, num_cl, max_mst_degree, 0);

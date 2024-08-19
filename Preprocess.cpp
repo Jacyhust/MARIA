@@ -14,7 +14,7 @@
 #define CANDIDATES 100
 #define E 2.718281746
 #define PI 3.1415926
-#define MAXSIZE 4096
+#define MAXSIZE 4096*5
 
 #define min(a,b)            (((a) < (b)) ? (a) : (b))
 
@@ -56,13 +56,13 @@ void Preprocess::load_data(const std::string& path){
 	for (int i = 0; i < queries.N; ++i) {
 		queries.val[i] = new float[queries.dim + 1];
 		in.read((char*)queries.val[i], sizeof(float) * header[2]);
-		queries.val[i][queries.dim - 1] = 0.0f;
+		queries.val[i][queries.dim] = 0.0f;
 	}
 
 	for (int i = 0; i < data.N; ++i) {
 		data.val[i] = new float[data.dim + 1];
 		in.read((char*)data.val[i], sizeof(float) * header[2]);
-		data.val[i][data.dim - 1] = 0.0f;
+		data.val[i][data.dim] = 0.0f;
 	}
 	
 	std::cout << "Load from new file: " << file << "\n";
@@ -214,7 +214,7 @@ Partition::Partition(float c_, float c0_, Preprocess& prep)
 
 Partition::Partition(float c_, Preprocess& prep)
 {
-	ratio = 0.95;
+	ratio = 0.00095;
 	float c0_ = 1.5f;
 	
 	make_chunks_fargo(prep);

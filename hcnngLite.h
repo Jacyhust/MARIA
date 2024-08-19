@@ -221,6 +221,7 @@ namespace hcnngLite {
 				delete[] idx_points;
 
 			}
+			delete pd;
 			printf("sorting...\n");
 			sort_edges();
 			//print_stats_graph(G);
@@ -448,7 +449,7 @@ namespace hcnngLite {
 			q->time_total = timer.elapsed();
 		}
 
-		void knn4maria(queryN* q, int start, int ef) {
+		void knn4maria(queryN* q, std::vector<int>& ids, int start, int ef) {
 			int cost = 0;
 			//lsh::timer timer;
 			std::priority_queue<Res> accessed_candidates;
@@ -456,8 +457,9 @@ namespace hcnngLite {
 			visited[start] = q->qid;
 			float dist = dist_t(q->queryPoint, data[start], data.dim);
 			cost++;
+			//accessed_candidates.emplace(ids[start], -dist);
 			accessed_candidates.emplace(start, -dist);
-			top_candidates.emplace(start, dist);
+			top_candidates.emplace(ids[start], dist);
 
 			while (!accessed_candidates.empty()) {
 				Res top = accessed_candidates.top();
@@ -469,8 +471,9 @@ namespace hcnngLite {
 					visited[u.id] = q->qid;
 					dist = dist_t(q->queryPoint, data[u.id], data.dim);
 					cost++;
+					//accessed_candidates.emplace(ids[u.id], -dist);
 					accessed_candidates.emplace(u.id, -dist);
-					top_candidates.emplace(u.id, dist);
+					top_candidates.emplace(ids[u.id], dist);
 					if (top_candidates.size() > ef) top_candidates.pop();
 				}
 			}

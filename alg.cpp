@@ -9,8 +9,8 @@ std::string data_fold1 = data_fold, data_fold2 = data_fold+("MIPS/");
 #else
 std::string data_fold = "E:/Dataset_for_c/", index_fold = " ";
 std::string data_fold1 = data_fold;
-//std::string data_fold2 = data_fold + ("MIPS/");
-std::string data_fold2 = data_fold + ("ANN/");
+std::string data_fold2 = data_fold + ("MIPS/");
+//std::string data_fold2 = data_fold + ("ANN/");
 #endif
 
 

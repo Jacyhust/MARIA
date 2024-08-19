@@ -675,22 +675,22 @@ public:
 
 	
 	void buildIndex(){
-		int minsize_cl = 1500;
+		int minsize_cl = 500;
 		int num_cl = 10;
 		int max_mst_degree = 3;
 
-		apgs=new hc_mips*[parti.numChunks];
+		apgs = new hc_mips * [parti.numChunks];
 		for (int i = 0; i < parti.numChunks; ++i) {
 			Data data;
-			data.N=parti.nums[i];
-			data.dim=dim;
-			data.val=new float*[data.N];
-			for(int j=0;j<data.N;++j){
-				data.val[j]=prep->data.val[parti.EachParti[i][j]];
+			data.N = parti.nums[i];
+			data.dim = dim - 1;
+			data.val = new float* [data.N];
+			for (int j = 0; j < data.N; ++j) {
+				data.val[j] = prep->data.val[parti.EachParti[i][j]];
 			}
 
-			apgs[i]=new hc_mips(index_file,data,index_file+std::to_string(i),
-			"index_result.txt",minsize_cl, num_cl, max_mst_degree, 1);
+			apgs[i] = new hc_mips(index_file + std::to_string(i), data, index_file + std::to_string(i),
+				"index_result.txt", minsize_cl, num_cl, max_mst_degree, 1);
 		}
 	}
 
@@ -722,11 +722,11 @@ public:
 
 			//apgs[i] = new hnsw(ips, parti.nums[i], M, ef);
 			auto& appr_alg = apgs[i];
-			auto start = parti.EachParti[i][0];
-			int ef=q->k+100;
+			auto start = 0;
+			int ef = q->k + 100;
 			//appr_alg->addPoint((void*)(data), (size_t)id);
 			//std::mutex inlock;
-			appr_alg->knn4maria(q,start,ef);
+			appr_alg->knn4maria(q, parti.EachParti[i], start, ef);
 		}
 
 		while (q->resHeap.size()>q->k) q->resHeap.pop();
