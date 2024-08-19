@@ -475,6 +475,8 @@ public:
 	}
 };
 
+using hc_mips=hcnngLite::hcnng<calInnerProductReverse>;
+
 class mariaV3
 {
 private:
@@ -617,6 +619,132 @@ public:
 	//void GetTables(Preprocess& prep);
 	//bool IsBuilt(const std::string& file);
 	~mariaV3() {
+		for (int i = 0; i < parti.numChunks; ++i) {
+			delete apgs[i];
+		}
+		delete[] apgs;
+	}
+};
+
+class maria_hcnng
+{
+private:
+	std::string index_file;
+
+public:
+	int N;
+	int dim;
+	// Number of hash functions
+	int S;
+	//#L Tables; 
+	int L;
+	// Dimension of the hash table
+	int K;
+
+	std::string alg_name = "maria";
+	//float** hashval;
+	Partition parti;
+	Preprocess* prep = nullptr;
+	IpSpace* ips = nullptr;
+	hc_mips** apgs = nullptr;
+	//HashParam hashpar;
+	//std::vector<int>*** myIndexes;
+
+	//float tmin;
+	//float tstep;
+	//float smin;
+	//float sstep;
+	//int rows;
+	//int cols;
+	//float** phi;
+
+	//void load_funtable(const std::string& file);
+public:
+	maria_hcnng(Preprocess& prep_, Parameter& param_, const std::string& file, Partition& part_, const std::string& funtable) :parti(part_) {
+		N = param_.N;
+		dim = param_.dim + 1;
+		L = param_.L;
+		K = param_.K;
+		S = param_.S;
+		prep=&prep_; 
+		index_file=file;
+
+		randomXT();
+		buildIndex();
+	}
+
+	
+	void buildIndex(){
+		int minsize_cl = 1500;
+		int num_cl = 10;
+		int max_mst_degree = 3;
+
+		apgs=new hc_mips*[parti.numChunks];
+		for (int i = 0; i < parti.numChunks; ++i) {
+			Data data;
+			data.N=parti.nums[i];
+			data.dim=dim;
+			data.val=new float*[data.N];
+			for(int j=0;j<data.N;++j){
+				data.val[j]=prep->data.val[parti.EachParti[i][j]];
+			}
+
+			apgs[i]=new hc_mips(index_file,data,index_file+std::to_string(i),
+			"index_result.txt",minsize_cl, num_cl, max_mst_degree, 1);
+		}
+	}
+
+
+
+	void randomXT() {
+		std::mt19937 rng(int(std::time(0)));
+		std::uniform_real_distribution<float> ur(-1, 1);
+		int count = 0;
+		for (int j = 0; j < N; j++)
+		{
+			assert(parti.MaxLen[parti.chunks[j]] >= prep->SquareLen[j]);
+			prep->data.val[j][dim - 1] = sqrt(parti.MaxLen[parti.chunks[j]] - prep->SquareLen[j]);
+			if (ur(rng) > 0) {
+				prep->data.val[j][dim - 1] *= -1;
+				++count;
+			}
+		}
+	}
+
+	void knn(queryN* q) {
+		lsh::timer timer;
+		timer.restart();
+	
+		for (int i = parti.numChunks - 1; i >= 0; --i) {
+			if ((!q->resHeap.empty()) && (-q->resHeap.top().dist) > 
+				q->norm * sqrt(parti.MaxLen[i])) break;
+
+
+			//apgs[i] = new hnsw(ips, parti.nums[i], M, ef);
+			auto& appr_alg = apgs[i];
+			auto start = parti.EachParti[i][0];
+			int ef=q->k+100;
+			//appr_alg->addPoint((void*)(data), (size_t)id);
+			//std::mutex inlock;
+			appr_alg->knn4maria(q,start,ef);
+		}
+
+		while (q->resHeap.size()>q->k) q->resHeap.pop();
+
+		while (!q->resHeap.empty()) {
+			auto top = q->resHeap.top();
+			q->resHeap.pop();
+			q->res.emplace_back(top.id, -top.dist);
+		}
+		
+		std::reverse(q->res.begin(), q->res.end());
+
+		q->time_total = timer.elapsed();
+	}
+
+	//void GetTables(Preprocess& prep);
+	//bool IsBuilt(const std::string& file);
+	~maria_hcnng() {
 		for (int i = 0; i < parti.numChunks; ++i) {
 			delete apgs[i];
 		}

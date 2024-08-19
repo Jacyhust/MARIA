@@ -35,8 +35,7 @@ float cal_L2sqr(float* v1, float* v2, int dim)
 
 }
 
-float cal_inner_product_trans(float* v1, float** mat, int dim)
-{
+float cal_inner_product_trans(float* v1, float** mat, int dim){
 	float res = 0.0f;
 	return res;
 }

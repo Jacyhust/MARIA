@@ -2,6 +2,7 @@
 #include "StructType.h"
 #include "basis.h"
 #include "Preprocess.h"
+#include "patch_ubuntu.h"
 
 #include <fstream>
 #include <omp.h>
@@ -11,7 +12,7 @@
 #include <unordered_set>
 #include <set>
 
-#include "patch_ubuntu.h"
+
 
 extern std::atomic<size_t> _G_COST;
 
@@ -114,7 +115,7 @@ namespace hcnngLite {
 
 		std::string alg_name = "hcnng";
 
-		hcnng(std::string datasetName, Data& data_, std::string file_graph, std::string index_result,
+		hcnng(std::string datasetName, Data data_, std::string file_graph, std::string index_result,
 			int minsize_cl_, int num_cl_, int max_mst_degree_, bool rebuilt = false) {
 			minsize_cl = minsize_cl_;
 			num_cl = num_cl_;
@@ -445,6 +446,44 @@ namespace hcnngLite {
 				top_candidates.pop();
 			}
 			q->time_total = timer.elapsed();
+		}
+
+		void knn4maria(queryN* q, int start, int ef) {
+			int cost = 0;
+			//lsh::timer timer;
+			std::priority_queue<Res> accessed_candidates;
+			auto& top_candidates=q->resHeap;
+			visited[start] = q->qid;
+			float dist = dist_t(q->queryPoint, data[start], data.dim);
+			cost++;
+			accessed_candidates.emplace(start, -dist);
+			top_candidates.emplace(start, dist);
+
+			while (!accessed_candidates.empty()) {
+				Res top = accessed_candidates.top();
+				if (-top.dist > top_candidates.top().dist) break;
+				accessed_candidates.pop();
+
+				for (auto& u : nngraph[top.id]) {
+					if (visited[u.id] == q->qid) continue;
+					visited[u.id] = q->qid;
+					dist = dist_t(q->queryPoint, data[u.id], data.dim);
+					cost++;
+					accessed_candidates.emplace(u.id, -dist);
+					top_candidates.emplace(u.id, dist);
+					if (top_candidates.size() > ef) top_candidates.pop();
+				}
+			}
+
+			// while (top_candidates.size() > q->k) top_candidates.pop();
+
+			// q->res.resize(q->k);
+			// int pos = q->k;
+			// while (!top_candidates.empty()) {
+			// 	q->res[--pos] = top_candidates.top();
+			// 	top_candidates.pop();
+			// }
+			// q->time_total = timer.elapsed();
 		}
 	};
 

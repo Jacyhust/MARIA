@@ -62,7 +62,7 @@ int main(int argc, char const* argv[])
 	// hnsw.setEf(500);
 	// mariaV2 maria2(prep, param, index_fold.append(argvStr[2]), parti, data_fold2 + "MyfunctionXTheta.data");
 	
-	// maria maria(prep, param, index_fold.append(argvStr[2]), parti, data_fold2 + "MyfunctionXTheta.data");
+	maria_hcnng maria(prep, param, index_fold.append(argvStr[2]), parti, data_fold2 + "MyfunctionXTheta.data");
 
 	// mariaV3 maria3(prep, param, index_fold.append(argvStr[2]), parti, data_fold2 + "MyfunctionXTheta.data");
 	
@@ -78,6 +78,7 @@ int main(int argc, char const* argv[])
 		minsize_cl, num_cl, max_mst_degree, 1);
 
 	res.push_back(Alg0_maria(hcnng, c, 100, k, L, K, prep));
+	res.push_back(Alg0_maria(maria, c, 100, k, L, K, prep));
 	std::vector<int> ms = { 0,100,200,400,800,1200,1600,3200,6400};
 	//ms = { 100 };
 	// res.push_back(Alg0_mariaV2(maria2, c, 100, k, L, K, prep));
