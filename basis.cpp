@@ -1,5 +1,6 @@
 #include "basis.h"
 #include "distances_simd_avx512.h"
+#include "patch_ubuntu.h"
 extern std::atomic<size_t> _G_COST;
 
 float cal_inner_product(float* v1, float* v2, int dim)

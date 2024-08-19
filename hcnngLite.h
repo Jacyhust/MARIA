@@ -241,11 +241,11 @@ namespace hcnngLite {
 			std::vector<std::pair<float, int>> dy(num_points);
 			std::unordered_set<int> taken;
 			for (int i = 0; i < num_points; i++) {
-				//dx[i] = std::make_pair(cal_L2sqr(data[idx_points[x]], data[idx_points[left + i]], data.dim), idx_points[left + i]);
-				//dy[i] = std::make_pair(cal_L2sqr(data[idx_points[y]], data[idx_points[left + i]], data.dim), idx_points[left + i]);
+				dx[i] = std::make_pair(cal_L2sqr(data[idx_points[x]], data[idx_points[left + i]], data.dim), idx_points[left + i]);
+				dy[i] = std::make_pair(cal_L2sqr(data[idx_points[y]], data[idx_points[left + i]], data.dim), idx_points[left + i]);
 
-				dx[i] = std::make_pair(dist_t(data[idx_points[x]], data[idx_points[left + i]], data.dim), idx_points[left + i]);
-				dy[i] = std::make_pair(dist_t(data[idx_points[y]], data[idx_points[left + i]], data.dim), idx_points[left + i]);
+				// dx[i] = std::make_pair(dist_t(data[idx_points[x]], data[idx_points[left + i]], data.dim), idx_points[left + i]);
+				// dy[i] = std::make_pair(dist_t(data[idx_points[y]], data[idx_points[left + i]], data.dim), idx_points[left + i]);
 			}
 			std::sort(dx.begin(), dx.end());
 			std::sort(dy.begin(), dy.end());

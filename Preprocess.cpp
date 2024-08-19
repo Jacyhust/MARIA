@@ -32,8 +32,7 @@ Preprocess::Preprocess(const std::string& path, const std::string& ben_file_)
 	ben_create();
 }
 
-void Preprocess::load_data(const std::string& path)
-{
+void Preprocess::load_data(const std::string& path){
 	std::string file = path + "_new";
 	std::ifstream in(file.c_str(), std::ios::binary);
 	if (!in) {
@@ -117,7 +116,7 @@ void Preprocess::ben_make()
 		for (int i = 0; i < data.N; i++)
 		{
 			a.id = i;
-			a.inp = cal_inner_product(data.val[i], data.val[j], data.dim);
+			a.inp = cal_inner_product(data.val[i], queries.val[j], data.dim);
 			dists.push_back(a);
 		}
 
