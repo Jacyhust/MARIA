@@ -28,6 +28,7 @@ namespace hnswlib {
 
         ~VisitedList() { delete[] mass; }
     };
+
 ///////////////////////////////////////////////////////////
 //
 // Class for multi-threaded pool-management of VisitedLists

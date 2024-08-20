@@ -36,7 +36,7 @@ public:
 	//int rows;
 	//int cols;
 	//float** phi;
-
+	`
 	//void load_funtable(const std::string& file);
 public:
 	maria(Preprocess& prep_, Parameter& param_, const std::string& file, Partition& part_, const std::string& funtable) :parti(part_) {

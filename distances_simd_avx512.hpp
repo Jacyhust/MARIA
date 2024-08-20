@@ -1,12 +1,14 @@
 
 // -*- c++ -*-
 
+#include <stddef.h>
+#include <stdint.h>
 #include <cstdio>
 #include <cassert>
 #include <immintrin.h>
 #include <string>
 
-#include "distances_simd_avx512.h"
+//#include "distances_simd_avx512.h"
 
 #ifdef __AVX2__
 namespace faiss {
@@ -26,10 +28,10 @@ static inline __m128 masked_read (int d, const float *x) {
     return _mm_load_ps(buf);
     // cannot use AVX2 _mm_mask_set1_epi32
 }
-uint8_t lookup8bit[256];
+static uint8_t lookup8bit[256];
 //extern uint8_t lookup8bit[256];
 
-float
+inline float
 fvec_inner_product_avx512(const float* x, const float* y, size_t d) {
     __m512 msum0 = _mm512_setzero_ps();
 
@@ -71,7 +73,7 @@ fvec_inner_product_avx512(const float* x, const float* y, size_t d) {
     return  _mm_cvtss_f32 (msum2);
 }
 
-float
+inline float
 fvec_L2sqr_avx512(const float* x, const float* y, size_t d) {
     __m512 msum0 = _mm512_setzero_ps();
 
@@ -117,7 +119,7 @@ fvec_L2sqr_avx512(const float* x, const float* y, size_t d) {
     return  _mm_cvtss_f32 (msum2);
 }
 
-float
+inline float
 fvec_L1_avx512(const float* x, const float* y, size_t d) {
     __m512 msum0 = _mm512_setzero_ps();
     __m512 signmask0 = __m512(_mm512_set1_epi32 (0x7fffffffUL));
@@ -166,7 +168,7 @@ fvec_L1_avx512(const float* x, const float* y, size_t d) {
     return  _mm_cvtss_f32 (msum2);
 }
 
-float
+inline float
 fvec_Linf_avx512(const float* x, const float* y, size_t d) {
     __m512 msum0 = _mm512_setzero_ps();
     __m512 signmask0 = __m512(_mm512_set1_epi32 (0x7fffffffUL));
@@ -215,7 +217,7 @@ fvec_Linf_avx512(const float* x, const float* y, size_t d) {
     return  _mm_cvtss_f32 (msum2);
 }
 
-uint64_t
+inline uint64_t
 _mm256_hsum_epi64(__m256i v) {
     return _mm256_extract_epi64(v, 0) +
            _mm256_extract_epi64(v, 1) +
@@ -223,14 +225,14 @@ _mm256_hsum_epi64(__m256i v) {
            _mm256_extract_epi64(v, 3);
 }
 
-uint64_t _mm512_hsum_epi64(__m512i v) {
+inline uint64_t _mm512_hsum_epi64(__m512i v) {
     const __m256i t0 = _mm512_extracti64x4_epi64(v, 0);
     const __m256i t1 = _mm512_extracti64x4_epi64(v, 1);
 
     return _mm256_hsum_epi64(t0) + _mm256_hsum_epi64(t1);
 }
 
-int
+inline int
 popcnt_AVX512VBMI_lookup(const uint8_t* data, const size_t n) {
 
     size_t i = 0;
@@ -274,7 +276,7 @@ popcnt_AVX512VBMI_lookup(const uint8_t* data, const size_t n) {
     return result;
 }
 
-int
+inline int
 xor_popcnt_AVX512VBMI_lookup(const uint8_t* data1, const uint8_t* data2, const size_t n) {
 
     size_t i = 0;
@@ -320,7 +322,7 @@ xor_popcnt_AVX512VBMI_lookup(const uint8_t* data1, const uint8_t* data2, const s
     return result;
 }
 
-int
+inline int
 or_popcnt_AVX512VBMI_lookup(const uint8_t* data1, const uint8_t* data2, const size_t n) {
 
     size_t i = 0;
@@ -366,7 +368,7 @@ or_popcnt_AVX512VBMI_lookup(const uint8_t* data1, const uint8_t* data2, const si
     return result;
 }
 
-int
+inline int
 and_popcnt_AVX512VBMI_lookup(const uint8_t* data1, const uint8_t* data2, const size_t n) {
 
     size_t i = 0;
@@ -412,7 +414,7 @@ and_popcnt_AVX512VBMI_lookup(const uint8_t* data1, const uint8_t* data2, const s
     return result;
 }
 
-float
+inline float
 jaccard_AVX512(const uint8_t * a, const uint8_t * b, size_t n) {
     int accu_num = and_popcnt_AVX512VBMI_lookup(a,b,n);
     int accu_den = or_popcnt_AVX512VBMI_lookup(a,b,n);

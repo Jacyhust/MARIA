@@ -1,6 +1,6 @@
 #pragma once
 #include "StructType.h"
-#include "basis.h"
+#include "basis.hpp"
 #include <cmath>
 #include <assert.h>
 #include <string>
