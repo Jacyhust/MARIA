@@ -1,0 +1,44 @@
+#include "basis.h"
+#include "distances_simd_avx512.h"
+#include "patch_ubuntu.h"
+extern std::atomic<size_t> _G_COST;
+
+float cal_inner_product(float* v1, float* v2, int dim)
+{
+	++_G_COST;
+#ifdef __AVX2__
+	return faiss::fvec_inner_product_avx512(v1, v2, dim);
+#else
+	float res = 0.0;
+	for (int i = 0; i < dim; ++i) {
+		res += v1[i] * v2[i];
+	}
+	return res;
+
+	return calIp_fast(v1, v2, dim);
+#endif
+	
+}
+
+float cal_L2sqr(float* v1, float* v2, int dim)
+{
+	++_G_COST;
+#ifdef __AVX2__
+	return (faiss::fvec_L2sqr_avx512(v1, v2, dim));
+#else
+	float res = 0.0;
+	for (int i = 0; i < dim; ++i) {
+		res += (v1[i] - v2[i]) * (v1[i] - v2[i]);
+	}
+	return res;
+#endif
+
+}
+
+float cal_inner_product_trans(float* v1, float** mat, int dim){
+	float res = 0.0f;
+	return res;
+}
+ 
+
+

@@ -32,7 +32,7 @@ std::unique_lock<std::mutex>* glock = nullptr;
 
 int main(int argc, char const* argv[])
 {
-	std::string dataset = "mnist";
+	std::string dataset = "tiny5m";
 	if (argc > 1) {
 		dataset = argv[1];
 	}
@@ -61,6 +61,13 @@ int main(int argc, char const* argv[])
 	// myHNSW hnsw(prep, param, index_fold.append(argvStr[2]), parti, data_fold2 + "MyfunctionXTheta.data");
 	// hnsw.setEf(500);
 	// mariaV2 maria2(prep, param, index_fold.append(argvStr[2]), parti, data_fold2 + "MyfunctionXTheta.data");
+<<<<<<< HEAD
+=======
+	
+	maria_hcnng maria(prep, param, index_fold.append(argvStr[2]), parti, data_fold2 + "MyfunctionXTheta.data");
+
+	// mariaV3 maria3(prep, param, index_fold.append(argvStr[2]), parti, data_fold2 + "MyfunctionXTheta.data");
+>>>>>>> 4b796d6feae57044a3596529611102cf9ad3046d
 	
 	// maria maria(prep, param, index_fold.append(argvStr[2]), parti, data_fold2 + "MyfunctionXTheta.data");
 
@@ -78,6 +85,7 @@ int main(int argc, char const* argv[])
 		minsize_cl, num_cl, max_mst_degree, 1);
 
 	res.push_back(Alg0_maria(hcnng, c, 100, k, L, K, prep));
+	res.push_back(Alg0_maria(maria, c, 100, k, L, K, prep));
 	std::vector<int> ms = { 0,100,200,400,800,1200,1600,3200,6400};
 	//ms = { 100 };
 	// res.push_back(Alg0_mariaV2(maria2, c, 100, k, L, K, prep));
