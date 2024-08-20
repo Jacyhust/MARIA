@@ -96,7 +96,7 @@ template<typename MTYPE>
 using DISTFUNC = MTYPE(*)(const void*, const void*, const void*);
 //using namespace hnswlib;
 
-#include "basis.hpp"
+#include "basis.h"
 
 static float cal_inner_product_hnsw(const void* pVect1v, const void* pVect2v, const void* qty_ptr) {
     //++_G_COST;
