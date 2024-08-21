@@ -32,7 +32,7 @@ std::unique_lock<std::mutex>* glock = nullptr;
 
 int main(int argc, char const* argv[])
 {
-	std::string dataset = "tiny5m";
+	std::string dataset = "audio";
 	if (argc > 1) {
 		dataset = argv[1];
 	}
@@ -58,27 +58,27 @@ int main(int argc, char const* argv[])
 	lsh::timer timer;
 	Partition parti(c, prep);
 	//mf_alsh::Hash myslsh(prep, param, index_fold.append(argvStr[2]), parti, data_fold2 + "MyfunctionXTheta.data");
-	// myHNSW hnsw(prep, param, index_fold.append(argvStr[2]), parti, data_fold2 + "MyfunctionXTheta.data");
-	// hnsw.setEf(500);
-	// mariaV2 maria2(prep, param, index_fold.append(argvStr[2]), parti, data_fold2 + "MyfunctionXTheta.data");
-	
-	maria_hcnng maria(prep, param, index_fold.append(argvStr[2]), parti, data_fold2 + "MyfunctionXTheta.data");
+	//myHNSW hnsw(prep, param, index_fold.append(argvStr[2]), parti, data_fold2 + "MyfunctionXTheta.data");
+	//hnsw.setEf(500);
+	//// mariaV2 maria2(prep, param, index_fold.append(argvStr[2]), parti, data_fold2 + "MyfunctionXTheta.data");
+	//
+	//maria_hcnng maria(prep, param, index_fold.append(argvStr[2]), parti, data_fold2 + "MyfunctionXTheta.data");
 
-	// mariaV3 maria3(prep, param, index_fold.append(argvStr[2]), parti, data_fold2 + "MyfunctionXTheta.data");
-	
-	int minsize_cl = 500;
-	int num_cl = 10;
-	int max_mst_degree = 3;
-	//hcnngLite::hcnng<calInnerProductReverse>(dataset, prep.data, data_fold2 + argvStr[2] + "_hcnng", "index_result.txt", minsize_cl, num_cl, max_mst_degree, 0);
+	//// mariaV3 maria3(prep, param, index_fold.append(argvStr[2]), parti, data_fold2 + "MyfunctionXTheta.data");
+	//
+	//int minsize_cl = 500;
+	//int num_cl = 10;
+	//int max_mst_degree = 3;
+	////hcnngLite::hcnng<calInnerProductReverse>(dataset, prep.data, data_fold2 + argvStr[2] + "_hcnng", "index_result.txt", minsize_cl, num_cl, max_mst_degree, 0);
 
-	//hcnngLite::hcnng<calInnerProductReverse> hcnng(dataset, prep.data, data_fold2 + argvStr[2] + "_hcnng", "index_result.txt", 
+	////hcnngLite::hcnng<calInnerProductReverse> hcnng(dataset, prep.data, data_fold2 + argvStr[2] + "_hcnng", "index_result.txt", 
+	////	minsize_cl, num_cl, max_mst_degree, 1);
+
+	//hcnngLite::hcnng<calInnerProductReverse> hcnng(dataset, prep.data, data_fold2 + argvStr[2] + "_hcnng", "index_result.txt",
 	//	minsize_cl, num_cl, max_mst_degree, 1);
 
-	hcnngLite::hcnng<calInnerProductReverse> hcnng(dataset, prep.data, data_fold2 + argvStr[2] + "_hcnng", "index_result.txt",
-		minsize_cl, num_cl, max_mst_degree, 1);
-
-	res.push_back(Alg0_maria(hcnng, c, 100, k, L, K, prep));
-	res.push_back(Alg0_maria(maria, c, 100, k, L, K, prep));
+	//res.push_back(Alg0_maria(hcnng, c, 100, k, L, K, prep));
+	//res.push_back(Alg0_maria(maria, c, 100, k, L, K, prep));
 	std::vector<int> ms = { 0,100,200,400,800,1200,1600,3200,6400};
 	//ms = { 100 };
 	// res.push_back(Alg0_mariaV2(maria2, c, 100, k, L, K, prep));
