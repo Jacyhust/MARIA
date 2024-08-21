@@ -14,22 +14,22 @@ std::string data_fold2 = data_fold + ("MIPS/");
 #endif
 
 
-#if defined(unix) || defined(__unix__)
-struct llt
-{
-	int date, h, m, s;
-	llt(size_t diff) { set(diff); }
-	void set(size_t diff)
-	{
-		date = diff / 86400;
-		diff = diff % 86400;
-		h = diff / 3600;
-		diff = diff % 3600;
-		m = diff / 60;
-		s = diff % 60;
-	}
-};
-#endif
+// #if defined(unix) || defined(__unix__)
+// struct llt
+// {
+// 	int date, h, m, s;
+// 	llt(size_t diff) { set(diff); }
+// 	void set(size_t diff)
+// 	{
+// 		date = diff / 86400;
+// 		diff = diff % 86400;
+// 		h = diff / 3600;
+// 		diff = diff % 3600;
+// 		m = diff / 60;
+// 		s = diff % 60;
+// 	}
+// };
+// #endif
 
 void saveAndShow(float c, int k, std::string& dataset, std::vector<resOutput>& res)
 {
@@ -43,9 +43,9 @@ void saveAndShow(float c, int k, std::string& dataset, std::vector<resOutput>& r
 	//time_t now = std::time(0);
 	time_t zero_point = 1635153971 - 17 * 3600 - 27 * 60;//Let me set the time at 2021.10.25. 17:27 as the zero point
 	size_t diff = (size_t)(now - zero_point);
-#if defined(unix) || defined(__unix__)
-	llt lt(diff);
-#endif
+// #if defined(unix) || defined(__unix__)
+// 	llt lt(diff);
+// #endif
 
 	double date = ((float)(now - zero_point)) / 86400;
 	float hour = date - floor(date);
@@ -81,17 +81,22 @@ void saveAndShow(float c, int k, std::string& dataset, std::vector<resOutput>& r
 			<< std::setw(12) << res[i].cost
 			<< std::endl;
 	}
-#if defined(unix) || defined(__unix__)
-	ss << "\n******************************************************************************************************\n"
-		<< "                                                                                    "
-		<< lt.date << '-' << lt.h << ':' << lt.m << ':' << lt.s
-		<< "\n******************************************************************************************************\n\n\n";
-#else
 	ss << "\n******************************************************************************************************\n"
 		<< "                                                                                    "
 		<< ltm->tm_mon + 1 << '-' << ltm->tm_mday << ' ' << ltm->tm_hour << ':' << ltm->tm_min
 		<< "\n*****************************************************************************************************\n\n\n";
-#endif
+
+// #if defined(unix) || defined(__unix__)
+// 	ss << "\n******************************************************************************************************\n"
+// 		<< "                                                                                    "
+// 		<< lt.date << '-' << lt.h << ':' << lt.m << ':' << lt.s
+// 		<< "\n******************************************************************************************************\n\n\n";
+// #else
+// 	ss << "\n******************************************************************************************************\n"
+// 		<< "                                                                                    "
+// 		<< ltm->tm_mon + 1 << '-' << ltm->tm_mday << ' ' << ltm->tm_hour << ':' << ltm->tm_min
+// 		<< "\n*****************************************************************************************************\n\n\n";
+// #endif
 	
 
 	std::cout << ss.str();

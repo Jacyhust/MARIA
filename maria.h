@@ -120,6 +120,7 @@ public:
 			auto data = prep->data.val[id];
 			//appr_alg->addPoint((void*)(data), (size_t)id);
 			//std::mutex inlock;
+			appr_alg->setEf(q->k+1000);
 			auto res = appr_alg->searchKnn(q->queryPoint, q->k);
 
 			while (!res.empty()) {
@@ -641,7 +642,7 @@ public:
 	// Dimension of the hash table
 	int K;
 
-	std::string alg_name = "maria";
+	std::string alg_name = "maria_hc";
 	//float** hashval;
 	Partition parti;
 	Preprocess* prep = nullptr;
@@ -689,7 +690,7 @@ public:
 				data.val[j] = prep->data.val[parti.EachParti[i][j]];
 			}
 
-			apgs[i] = new hc_mips(index_file + std::to_string(i), data, index_file + std::to_string(i),
+			apgs[i] = new hc_mips(index_file + std::to_string(i), data, "indexes/"+index_file + std::to_string(i),
 				"index_result.txt", minsize_cl, num_cl, max_mst_degree, 1);
 		}
 	}
@@ -716,7 +717,7 @@ public:
 		timer.restart();
 	
 		for (int i = parti.numChunks - 1; i >= 0; --i) {
-			if ((!q->resHeap.empty()) && (-q->resHeap.top().dist) > 
+			if ((!q->resHeap.empty()) && (-(q->resHeap.top().dist)) > 
 				q->norm * sqrt(parti.MaxLen[i])) break;
 
 

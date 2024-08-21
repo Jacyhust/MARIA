@@ -37,7 +37,12 @@ extern std::string data_fold, index_fold;
 extern std::string data_fold1, data_fold2;
 
 #if defined(unix) || defined(__unix__)
-inline void localtime_s(tm* ltm, time_t* now) {}
+inline void localtime_s(tm* result, time_t* time) {
+	if (localtime_r(time, result) == nullptr) {
+        std::cerr << "Error converting time." << std::endl;
+        std::memset(result, 0, sizeof(struct tm)); 
+    }
+}
 #endif
 
 inline resOutput Alg0_mfalsh(mf_alsh::Hash& myslsh, float c_, int m_, int k_, int L_, int K_, Preprocess& prep)
