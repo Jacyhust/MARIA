@@ -1,6 +1,6 @@
 #include "mf_alsh.h"
 #include "Preprocess.h"
-#include "basis.h"
+#include "basis.hpp"
 #include <fstream>
 #include <assert.h>
 #include <random>
