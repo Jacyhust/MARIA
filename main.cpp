@@ -61,7 +61,6 @@ int main(int argc, char const* argv[])
 
 	lsh::timer timer;
 	Partition parti(c, prep);
-	mf_alsh::Hash myslsh(prep, param, index_fold+(argvStr[2]), parti, data_fold2 + "MyfunctionXTheta.data");
 	myHNSW hnsw(prep, param, index_fold+(argvStr[2]), parti, data_fold2 + "MyfunctionXTheta.data");
 	hnsw.setEf(500);
 	// mariaV2 maria2(prep, param, index_fold.append(argvStr[2]), parti, data_fold2 + "MyfunctionXTheta.data");
