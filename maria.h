@@ -119,7 +119,7 @@ public:
 			auto data = prep->data.val[id];
 			//appr_alg->addPoint((void*)(data), (size_t)id);
 			//std::mutex inlock;
-			appr_alg->setEf(q->k+1000);
+			appr_alg->setEf(q->k + 100);
 			auto res = appr_alg->searchKnn(q->queryPoint, q->k);
 
 			while (!res.empty()) {
