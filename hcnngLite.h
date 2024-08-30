@@ -12,8 +12,6 @@
 #include <unordered_set>
 #include <set>
 
-
-
 extern std::atomic<size_t> _G_COST;
 
 namespace hcnngLite {

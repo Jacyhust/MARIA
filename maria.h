@@ -13,30 +13,15 @@ private:
 public:
 	int N;
 	int dim;
-	// Number of hash functions
 	int S;
-	//#L Tables; 
 	int L;
-	// Dimension of the hash table
 	int K;
 
 	std::string alg_name = "maria";
-	//float** hashval;
 	Partition parti;
 	Preprocess* prep = nullptr;
 	IpSpace* ips = nullptr;
 	hnsw** apgs = nullptr;
-	//HashParam hashpar;
-	//std::vector<int>*** myIndexes;
-
-	//float tmin;
-	//float tstep;
-	//float smin;
-	//float sstep;
-	//int rows;
-	//int cols;
-	//float** phi;
-	//void load_funtable(const std::string& file);
 public:
 	maria(Preprocess& prep_, Parameter& param_, const std::string& file, Partition& part_, const std::string& funtable) :parti(part_) {
 		N = param_.N;
@@ -86,8 +71,6 @@ public:
 			}
 		}
 	}
-
-
 
 	void randomXT() {
 		std::mt19937 rng(int(std::time(0)));
