@@ -131,8 +131,6 @@ void Preprocess::ben_make()
 
 }
 
-
-
 void Preprocess::ben_save()
 {
 	std::ofstream out(ben_file.c_str(), std::ios::binary);

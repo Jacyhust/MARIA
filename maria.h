@@ -16,7 +16,7 @@ public:
 	int S;
 	int L;
 	int K;
-
+ 
 	std::string alg_name = "maria";
 	Partition parti;
 	Preprocess* prep = nullptr;
@@ -104,14 +104,12 @@ public:
 			//std::mutex inlock;
 			appr_alg->setEf(q->k + 100);
 			auto res = appr_alg->searchKnn(q->queryPoint, q->k);
-
 			while (!res.empty()) {
 				auto top = res.top();
 				res.pop();
 				q->resHeap.emplace(top.second, top.first);
 				while (q->resHeap.size() > q->k) q->resHeap.pop();
 			}
-
 			
 		}
 
