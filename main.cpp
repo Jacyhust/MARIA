@@ -20,7 +20,7 @@
 //#include "basis.h"
 #include "alg.h"
 #include "maria.h"
-
+#include "bf.h"
 extern std::string data_fold, index_fold;
 extern std::string data_fold1, data_fold2;
 std::unique_lock<std::mutex>* glock = nullptr;
@@ -61,6 +61,7 @@ int main(int argc, char const* argv[])
 
 	lsh::timer timer;
 	Partition parti(c, prep);
+	//solidAnglePartition sap(prep, param, index_fold + (argvStr[2]), parti, data_fold2 + "MyfunctionXTheta.data");
 	myHNSW hnsw(prep, param, index_fold+(argvStr[2]), parti, data_fold2 + "MyfunctionXTheta.data");
 	hnsw.setEf(500);
 	// mariaV2 maria2(prep, param, index_fold.append(argvStr[2]), parti, data_fold2 + "MyfunctionXTheta.data");

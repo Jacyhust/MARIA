@@ -12,7 +12,7 @@ class Preprocess
 public:
 	Data data;
 	Data queries;
-	float* SquareLen;
+	float* norms = nullptr;
 	Ben benchmark;
 	float MaxLen;
 	std::string data_file;
@@ -112,6 +112,10 @@ struct Res//the result of knns
 	Res(int id_, float inp_) :id(id_), dist(inp_) {}
 	bool operator < (const Res& rhs) const {
 		return dist < rhs.dist;
+	}
+
+	bool operator > (const Res& rhs) const {
+		return dist > rhs.dist;
 	}
 };
 

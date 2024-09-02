@@ -78,8 +78,8 @@ public:
 		int count = 0;
 		for (int j = 0; j < N; j++)
 		{
-			assert(parti.MaxLen[parti.chunks[j]] >= prep->SquareLen[j]);
-			prep->data.val[j][dim - 1] = sqrt(parti.MaxLen[parti.chunks[j]] - prep->SquareLen[j]);
+			assert(parti.MaxLen[parti.chunks[j]] >= prep->norms[j]);
+			prep->data.val[j][dim - 1] = sqrt(parti.MaxLen[parti.chunks[j]] - prep->norms[j]);
 			if (ur(rng) > 0) {
 				prep->data.val[j][dim - 1] *= -1;
 				++count;
@@ -139,7 +139,8 @@ private:
 	std::string index_file;
 	IpSpace* ips = nullptr;
 	hnsw* apg = nullptr;
-	Preprocess* prep = nullptr;
+	//Preprocess* prep = nullptr;
+	Data data;
 public:
 	int N;
 	int dim;
@@ -158,7 +159,20 @@ public:
 		L = param_.L;
 		K = param_.K;
 		S = param_.S;
-		prep = &prep_;
+		//prep = &prep_;
+		data = prep_.data;
+		//GetHash();
+		buildIndex();
+	}
+
+	myHNSW(Data& data_, Parameter& param_, const std::string& file, Partition& part_, const std::string& funtable) {
+		N = param_.N;
+		dim = param_.dim;
+		L = param_.L;
+		K = param_.K;
+		S = param_.S;
+		//prep = &prep_;
+		data = data_;
 		//GetHash();
 		buildIndex();
 	}
@@ -178,8 +192,8 @@ public:
 		int j1 = 0;
 		apg = new hnsw(ips, N, M, ef);
 		auto id = 0;
-		auto data = prep->data.val[id];
-		apg->addPoint((void*)(data), (size_t)id);
+		auto data0 = data.val[id];
+		apg->addPoint((void*)(data0), (size_t)id);
 		std::mutex inlock;
 
 		auto vecsize = N;
@@ -197,8 +211,8 @@ public:
 				}
 			}
 			j2 = k;
-			float* data = prep->data.val[j2];
-			apg->addPoint((void*)(data), (size_t)j2);
+			float* data0 = data.val[j2];
+			apg->addPoint((void*)(data0), (size_t)j2);
 		}
 	}
 
@@ -210,7 +224,7 @@ public:
 		//apgs[i] = new hnsw(ips, parti.nums[i], M, ef);
 		auto& appr_alg = apg;
 		auto id = 0;
-		auto data = prep->data.val[id];
+		//auto data0 = data.val[id];
 		//appr_alg->addPoint((void*)(data), (size_t)id);
 		//std::mutex inlock;
 		auto res = appr_alg->searchKnn(q->queryPoint, q->k + ef);
@@ -321,8 +335,8 @@ public:
 		int count = 0;
 		for (int j = 0; j < N; j++)
 		{
-			assert(parti.MaxLen[parti.chunks[j]] >= prep->SquareLen[j]);
-			prep->data.val[j][dim - 1] = sqrt(parti.MaxLen[parti.chunks[j]] - prep->SquareLen[j]);
+			assert(parti.MaxLen[parti.chunks[j]] >= prep->norms[j]);
+			prep->data.val[j][dim - 1] = sqrt(parti.MaxLen[parti.chunks[j]] - prep->norms[j]);
 			if (ur(rng) > 0) {
 				prep->data.val[j][dim - 1] *= -1;
 				++count;
@@ -549,8 +563,8 @@ public:
 		int count = 0;
 		for (int j = 0; j < N; j++)
 		{
-			assert(parti.MaxLen[parti.chunks[j]] >= prep->SquareLen[j]);
-			prep->data.val[j][dim - 1] = sqrt(parti.MaxLen[parti.chunks[j]] - prep->SquareLen[j]);
+			assert(parti.MaxLen[parti.chunks[j]] >= prep->norms[j]);
+			prep->data.val[j][dim - 1] = sqrt(parti.MaxLen[parti.chunks[j]] - prep->norms[j]);
 			if (ur(rng) > 0) {
 				prep->data.val[j][dim - 1] *= -1;
 				++count;
@@ -683,8 +697,8 @@ public:
 		int count = 0;
 		for (int j = 0; j < N; j++)
 		{
-			assert(parti.MaxLen[parti.chunks[j]] >= prep->SquareLen[j]);
-			prep->data.val[j][dim - 1] = sqrt(parti.MaxLen[parti.chunks[j]] - prep->SquareLen[j]);
+			assert(parti.MaxLen[parti.chunks[j]] >= prep->norms[j]);
+			prep->data.val[j][dim - 1] = sqrt(parti.MaxLen[parti.chunks[j]] - prep->norms[j]);
 			if (ur(rng) > 0) {
 				prep->data.val[j][dim - 1] *= -1;
 				++count;

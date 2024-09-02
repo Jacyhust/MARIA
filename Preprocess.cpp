@@ -75,12 +75,12 @@ void Preprocess::load_data(const std::string& path){
 
 void Preprocess::cal_SquareLen()
 {
-	SquareLen = new float[data.N];
+	norms = new float[data.N];
 	for (int i = 0; i < data.N; ++i) {
-		SquareLen[i] = cal_inner_product(data.val[i], data.val[i], data.dim);
+		norms[i] = sqrt(cal_inner_product(data.val[i], data.val[i], data.dim));
 	}
 
-	MaxLen = *std::max_element(SquareLen, SquareLen + data.N);
+	MaxLen = *std::max_element(norms, norms + data.N);
 }
 
 typedef struct Tuple
@@ -201,7 +201,7 @@ Preprocess::~Preprocess()
 	clear_2d_array(data.val, data.N);
 	clear_2d_array(benchmark.indice, benchmark.N);
 	clear_2d_array(benchmark.innerproduct, benchmark.N);
-	delete[] SquareLen;
+	delete[] norms;
 }
 
 Partition::Partition(float c_, float c0_, Preprocess& prep)
@@ -228,7 +228,7 @@ void Partition::make_chunks_fargo(Preprocess& prep)
 	int N_ = prep.data.N;
 	int cnt = 0;
 	for (int j = 0; j < N_; j++) {
-		distpairs.emplace_back(j, prep.SquareLen[j]);
+		distpairs.emplace_back(j, prep.norms[j]);
 	}
 	std::sort(distpairs.begin(), distpairs.end());
 
@@ -268,7 +268,7 @@ void Partition::make_chunks_maria(Preprocess& prep)
 	int N_ = prep.data.N;
 	int n;
 	for (int j = 0; j < N_; j++){
-		distpairs.emplace_back(j, prep.SquareLen[j]);
+		distpairs.emplace_back(j, prep.norms[j]);
 	}
 	std::sort(distpairs.begin(), distpairs.end());
 
