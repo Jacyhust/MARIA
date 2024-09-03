@@ -173,7 +173,7 @@ public:
 		S = param_.S;
 		//prep = &prep_;
 		data = data_;
-		//GetHash();
+		//GetHash();`
 		buildIndex();
 	}
 
