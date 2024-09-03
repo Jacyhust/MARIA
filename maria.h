@@ -181,6 +181,10 @@ public:
 		apg->setEf(ef);
 	}
 
+	int getM() {
+		return apg->maxM0_;
+	}
+
 	void buildIndex() {
 		int M = 24;
 		int ef = 40;
@@ -240,7 +244,7 @@ public:
 			auto top = q->resHeap.top();
 			q->resHeap.pop();
 
-			q->res.emplace_back(top.id, 1.0-top.dist);
+			q->res.emplace_back(top.id, 1.0 - top.dist);
 		}
 
 		std::reverse(q->res.begin(), q->res.end());
@@ -644,7 +648,7 @@ public:
 	hc_mips** apgs = nullptr;
 	//HashParam hashpar;
 	//std::vector<int>*** myIndexes;
-
+	int M = 0;
 	//float tmin;
 	//float tstep;
 	//float smin;
@@ -673,6 +677,8 @@ public:
 		int minsize_cl = 500;
 		int num_cl = 10;
 		int max_mst_degree = 3;
+
+		M = num_cl * max_mst_degree;
 
 		apgs = new hc_mips * [parti.numChunks];
 		for (int i = 0; i < parti.numChunks; ++i) {

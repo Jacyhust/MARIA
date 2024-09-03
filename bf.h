@@ -71,17 +71,25 @@ public:
 
 #include "maria.h"
 
-class mariaV4 : public maria {
+class mariaV4 : public maria_hcnng {
 	Data normD;
 	//float** normlizedData = nullptr;
 	myHNSW* hnsw = nullptr;
 	std::string alg_name = "mariaV4";
+	int size_per_data = 0;
+	int* links = nullptr;
 public:
 	mariaV4(Preprocess& prep_, Parameter& param_, const std::string& file, Partition& part_, const std::string& funtable) :
-		maria(prep_, param_, file, part_, funtable) {
+		maria_hcnng(prep_, param_, file, part_, funtable) {
 		normlize();
 		hnsw = new myHNSW(normD, param_, file, part_, funtable);
+		size_per_data = hnsw->getM();
+		size_per_data += M + 1;
+		links = new int[N * size_per_data];
 
+		for (int i = 0; i < N; ++i) {
+			 
+		}
 	}
 
 	void normlize() {
