@@ -185,6 +185,19 @@ public:
 		return apg->maxM0_;
 	}
 
+	void getEdgeSet(int pid, int* ptr) {
+		//size_t id = *((size_t*)(apg->getDataByInternalId(pid)));
+		//return (apg->get_linklist0(id));
+		int id = pid;
+		int* dptr = (int*)(apg->get_linklist0(id));
+		size_t size = apg->getListCount((unsigned int*)dptr);
+
+		ptr[0] = size;
+		for (size_t j = 1; j <= size; j++) {
+			ptr[j] = *(dptr + j);
+		}
+	}
+
 	void buildIndex() {
 		int M = 24;
 		int ef = 40;

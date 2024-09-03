@@ -105,12 +105,12 @@ namespace hcnngLite {
 		float indexing_cost = 0.0f;
 		
 
-		std::vector<std::vector<Res>> nngraph;
+		
 		std::vector<omp_lock_t> locks;
 
 		std::vector<int> visited;
 	public:
-
+		std::vector<std::vector<Res>> nngraph;
 		std::string alg_name = "hcnng";
 
 		hcnng(std::string datasetName, Data data_, std::string file_graph, std::string index_result,
@@ -396,7 +396,7 @@ namespace hcnngLite {
 			for (int i = 0; i < N; i++) {
 				int degree = nngraph[i].size();
 				fwrite(&degree, sizeof(int), 1, F);
-				fwrite(&(nngraph[i][0]), sizeof(Res), degree, F);
+				if (degree) fwrite(&(nngraph[i][0]), sizeof(Res), degree, F);
 				int* aux = new int[degree];
 				//for (int j = 0; j < degree; j++)
 				//	aux[j] = nngraph[i][j].v2;
