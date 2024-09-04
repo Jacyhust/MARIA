@@ -93,7 +93,7 @@ public:
 	
 		for (int i = parti.numChunks - 1; i >= 0; --i) {
 			if ((!q->resHeap.empty()) && (1.0f-q->resHeap.top().dist) > 
-				q->norm * sqrt(parti.MaxLen[i])) break;
+				q->norm * (parti.MaxLen[i])) break;
 
 
 			//apgs[i] = new hnsw(ips, parti.nums[i], M, ef);
@@ -189,12 +189,22 @@ public:
 		//size_t id = *((size_t*)(apg->getDataByInternalId(pid)));
 		//return (apg->get_linklist0(id));
 		int id = pid;
+
+		for(int i=0;i<N;++i){
+			size_t uid = (apg->getExternalLabel(i));
+			if((int)uid==pid){
+				id=i;
+				break;
+			}
+			
+		}
+
 		int* dptr = (int*)(apg->get_linklist0(id));
 		size_t size = apg->getListCount((unsigned int*)dptr);
 
 		ptr[0] = size;
 		for (size_t j = 1; j <= size; j++) {
-			ptr[j] = *(dptr + j);
+			ptr[j] = apg->getExternalLabel(*(dptr + j));
 		}
 	}
 
@@ -367,10 +377,6 @@ public:
 		for (int i = 1; i < parti.numChunks; ++i) {
 			//apgs[i] = new hnsw(ips, parti.nums[i], M, ef);
 			auto& appr_alg = apgs[i - 1];
-			//auto id = parti.EachParti[i][0];
-			//auto data = prep->data.val[id];
-			//appr_alg->addPoint((void*)(data), (size_t)id);
-			//std::mutex inlock;
 
 			auto vecsize = parti.nums[i];
 			lsh::timer timer;
@@ -392,7 +398,7 @@ public:
 
 		for (int i = parti.numChunks - 1; i >= 0; --i) {
 			if ((!q->resHeap.empty()) && q->resHeap.top().dist > 
-				q->norm * sqrt(parti.MaxLen[i])) break;
+				q->norm * (parti.MaxLen[i])) break;
 
 			auto& appr_alg = apgs[i];
 			auto res = appr_alg->searchKnn(q->queryPoint, q->k);
@@ -427,7 +433,7 @@ public:
 
 		for (int i = parti.numChunks - 1; i >= 0; --i) {
 			if ((!q->resHeap.empty()) && q->resHeap.top().dist > 
-				q->norm * sqrt(parti.MaxLen[i])) break;
+				q->norm * (parti.MaxLen[i])) break;
 
 			auto& appr_alg = apgs[i];
 			
@@ -595,7 +601,7 @@ public:
 
 		for (int i = parti.numChunks - 1; i >= 0; --i) {
 			if ((!q->resHeap.empty()) && q->resHeap.top().dist >
-				q->norm * sqrt(parti.MaxLen[i])) break;
+				q->norm * (parti.MaxLen[i])) break;
 
 
 			//apgs[i] = new hnsw(ips, parti.nums[i], M, ef);
@@ -731,7 +737,7 @@ public:
 	
 		for (int i = parti.numChunks - 1; i >= 0; --i) {
 			if ((!q->resHeap.empty()) && (-(q->resHeap.top().dist)) > 
-				q->norm * sqrt(parti.MaxLen[i])) break;
+				q->norm * (parti.MaxLen[i])) break;
 
 
 			//apgs[i] = new hnsw(ips, parti.nums[i], M, ef);

@@ -115,6 +115,7 @@ public:
 
 				//memcpy(start + 1, ptr + 1, size);
 				//int r = 1;
+
 				for (int r = 0; r < edgesInBlock.size(); ++r) {
 					start[r + start[0] + 1] = parti.EachParti[i][edgesInBlock[r].id];
 				}
@@ -138,7 +139,8 @@ public:
 		}
 		normD.N = N;
 		normD.dim = dim;
-		normD.val = normlizedData;
+		//normD.val = normlizedData;
+		normD.val=prep->data.val;
 	}
 
 	void knn(queryN* q) {
