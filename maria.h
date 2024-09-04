@@ -141,6 +141,7 @@ private:
 	hnsw* apg = nullptr;
 	//Preprocess* prep = nullptr;
 	Data data;
+	std::vector<int> hnsw_maps;//maps between hnsw internel labels and external labels
 public:
 	int N;
 	int dim;
@@ -185,19 +186,27 @@ public:
 		return apg->maxM0_;
 	}
 
+	void buildMap() {
+		hnsw_maps.resize(N, -1);
+		for (int i = 0; i < N; ++i) {
+			size_t uid = (apg->getExternalLabel(i));
+			hnsw_maps[uid] = i;
+		}
+	}
+
 	void getEdgeSet(int pid, int* ptr) {
 		//size_t id = *((size_t*)(apg->getDataByInternalId(pid)));
 		//return (apg->get_linklist0(id));
-		int id = pid;
+		int id = hnsw_maps[pid];
 
-		for(int i=0;i<N;++i){
-			size_t uid = (apg->getExternalLabel(i));
-			if((int)uid==pid){
-				id=i;
-				break;
-			}
-			
-		}
+		//for (int i = 0; i < N; ++i) {
+		//	size_t uid = (apg->getExternalLabel(i));
+		//	if ((int)uid == pid) {
+		//		id = i;
+		//		break;
+		//	}
+		//	
+		//}
 
 		int* dptr = (int*)(apg->get_linklist0(id));
 		size_t size = apg->getListCount((unsigned int*)dptr);
@@ -241,6 +250,8 @@ public:
 			float* data0 = data.val[j2];
 			apg->addPoint((void*)(data0), (size_t)j2);
 		}
+
+		std::cout << " Finish building HNSW\n";
 	}
 
 
@@ -248,12 +259,8 @@ public:
 		lsh::timer timer;
 		timer.restart();
 		int ef = apg->ef_;
-		//apgs[i] = new hnsw(ips, parti.nums[i], M, ef);
 		auto& appr_alg = apg;
 		auto id = 0;
-		//auto data0 = data.val[id];
-		//appr_alg->addPoint((void*)(data), (size_t)id);
-		//std::mutex inlock;
 		auto res = appr_alg->searchKnn(q->queryPoint, q->k + ef);
 
 		while (!res.empty()) {
@@ -266,12 +273,9 @@ public:
 		while (!q->resHeap.empty()) {
 			auto top = q->resHeap.top();
 			q->resHeap.pop();
-
 			q->res.emplace_back(top.id, 1.0 - top.dist);
 		}
-
 		std::reverse(q->res.begin(), q->res.end());
-
 		q->time_total = timer.elapsed();
 	}
 
