@@ -132,16 +132,16 @@ public:
 	}
 
 	void normlize() {
-		float** normlizedData = new float* [N];
-		for (int i = 0; i < N; ++i) {
-			normlizedData[i] = new float[dim];
-			for (int j = 0; j < dim; ++j) {
-				normlizedData[i][j] = prep->data[i][j] / prep->norms[i];
-			}
-		}
-		normD.N = N;
-		normD.dim = dim;
-		//normD.val = normlizedData;
+		// float** normlizedData = new float* [N];
+		// for (int i = 0; i < N; ++i) {
+		// 	normlizedData[i] = new float[dim];
+		// 	for (int j = 0; j < dim; ++j) {
+		// 		normlizedData[i][j] = prep->data[i][j] / prep->norms[i];
+		// 	}
+		// }
+		// normD.N = N;
+		// normD.dim = dim;
+		// //normD.val = normlizedData;
 		normD.val=prep->data.val;
 	}
 
@@ -189,7 +189,7 @@ public:
 	}
 
 	~mariaV4() {
-		clear_2d_array(normD.val, N);
+		//clear_2d_array(normD.val, N);
 	}
 
 
@@ -248,11 +248,6 @@ public:
 				start[0] += edgesInBlock.size();
 			}
 		}
-		//for (int i = 0; i < N; ++i) {
-		//	auto ptr = hnsw->getEdgeSet(i);
-		//	int size = *((unsigned short int*)ptr);
-		//	int len = size +
-		//}
 	}
 
 	void normlize() {
@@ -265,8 +260,8 @@ public:
 		}
 		normD.N = N;
 		normD.dim = dim;
-		//normD.val = normlizedData;
-		normD.val = prep->data.val;
+		normD.val = normlizedData;
+		//normD.val = prep->data.val;
 	}
 
 	void knn(queryN* q) {
