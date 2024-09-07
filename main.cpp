@@ -62,7 +62,7 @@ int main(int argc, char const* argv[])
 	lsh::timer timer;
 	Partition parti(c, prep);
 	//solidAnglePartition sap(prep, param, index_fold + (argvStr[2]), parti, data_fold2 + "MyfunctionXTheta.data");
-	//myHNSW hnsw(prep, param, index_fold+(argvStr[2]), parti, data_fold2 + "MyfunctionXTheta.data");
+	myHNSW hnsw(prep, param, index_fold+(argvStr[2]), parti, data_fold2 + "MyfunctionXTheta.data");
 	//hnsw.setEf(500);
 	// mariaV2 maria2(prep, param, index_fold.append(argvStr[2]), parti, data_fold2 + "MyfunctionXTheta.data");
 	mariaV4 mariaV4(prep, param, index_fold + (argvStr[2]), parti, data_fold2 + "MyfunctionXTheta.data");
@@ -72,14 +72,14 @@ int main(int argc, char const* argv[])
 	
 	// mariaV3 maria3(prep, param, index_fold.append(argvStr[2]), parti, data_fold2 + "MyfunctionXTheta.data");
 	//hcnngLite::hcnng<calInnerProductReverse>(dataset, prep.data, data_fold2 + argvStr[2] + "_hcnng", "index_result.txt", minsize_cl, num_cl, max_mst_degree, 0);
-	////hcnngLite::hcnng<calInnerProductReverse> hcnng(dataset, prep.data, data_fold2 + argvStr[2] + "_hcnng", "index_result.txt", 
-	////	minsize_cl, num_cl, max_mst_degree, 1);
+	hcnngLite::hcnng<calInnerProductReverse> hcnng(dataset, prep.data, data_fold2 + argvStr[2] + "_hcnng", "index_result.txt", 
+		minsize_cl, num_cl, max_mst_degree, 1);
 	//hcnngLite::hcnng<calInnerProductReverse> hcnng(dataset, prep.data, data_fold2 + argvStr[2] + "_hcnng", "index_result.txt",
 	//	minsize_cl, num_cl, max_mst_degree, 1);
 	//hcnngLite::hcnng<calInnerProductReverse> hcnng(dataset, prep.data, data_fold2 + argvStr[2] + "_hcnng", "index_result.txt",
 	//	minsize_cl, num_cl, max_mst_degree, 1);
 	//res.push_back(Alg0_maria(hcnng, c, 100, k, L, K, prep));
-	
+
 	res.push_back(Alg0_maria(maria, c, 100, k, L, K, prep));
 	res.push_back(Alg0_maria(maria_hc, c, 100, k, L, K, prep));
 	res.push_back(Alg0_maria(mariaV4, c, 100, k, L, K, prep));

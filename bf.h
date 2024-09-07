@@ -294,16 +294,6 @@ public:
 				top_candidates.emplace(ptr[i], dist);
 				if (top_candidates.size() > ef) top_candidates.pop();
 			}
-
-			//for (auto& u : nngraph[top.id]) {
-			//	if (visited[u.id] == q->qid) continue;
-			//	visited[u.id] = q->qid;
-			//	dist = dist_t(q->queryPoint, data[u.id], data.dim);
-			//	cost++;
-			//	accessed_candidates.emplace(u.id, -dist);
-			//	top_candidates.emplace(u.id, dist);
-			//	if (top_candidates.size() > ef) top_candidates.pop();
-			//}
 		}
 
 		while (top_candidates.size() > q->k) top_candidates.pop();
