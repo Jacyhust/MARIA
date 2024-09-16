@@ -322,7 +322,8 @@ namespace hnswlib
             int num_samples = 50;
             const int num_neighbours = 100;
             //std::vector<float> query; Issue 1: query should be defined inside omp for
-            std::vector<float> neighbours[num_neighbours];
+            //std::vector<float> neighbours[num_neighbours]; Issue 2: neighbor are 2-order vector
+            //std::vector<float> neighbours[num_neighbours];
 
             for (int i = 0; i < num_subranges; i++){
                 float xp_sum = 0;
@@ -332,6 +333,7 @@ namespace hnswlib
                 for (int sample_index = 0; sample_index < num_samples; sample_index++){
                     int random_indice = getRandomIndice(range_start_indices[i], range_start_indices[i + 1]);
                     std::vector<float> query;
+                    std::vector < std::vector<float>> neighbours[num_neighbours];
                     query = dataset[random_indice];
 
                     // get nearest neighbours (p)
