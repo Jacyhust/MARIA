@@ -321,7 +321,7 @@ namespace hnswlib
             // For each range, get a norm-based factor
             int num_samples = 50;
             const int num_neighbours = 100;
-            std::vector<float> query;
+            //std::vector<float> query; Issue 1: query should be defined inside omp for
             std::vector<float> neighbours[num_neighbours];
 
             for (int i = 0; i < num_subranges; i++){
@@ -331,6 +331,7 @@ namespace hnswlib
                 #pragma omp parallel for reduction(+:xp_sum,pp_sum)
                 for (int sample_index = 0; sample_index < num_samples; sample_index++){
                     int random_indice = getRandomIndice(range_start_indices[i], range_start_indices[i + 1]);
+                    std::vector<float> query;
                     query = dataset[random_indice];
 
                     // get nearest neighbours (p)
