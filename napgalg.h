@@ -741,7 +741,7 @@ namespace hnswlib
                                 data[j]);
                         }
 
-                        getNeighborsByHeuristic2(candidates, Mcurmax);
+                        getNeighborsByHeuristic2(candidates, Mcurmax, fac);
 
                         int indx = 0;
                         while (candidates.size() > 0)
