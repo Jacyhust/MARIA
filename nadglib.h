@@ -46,6 +46,8 @@ namespace hnswlib
         {
         }
 
+        //~NormAdjustedDelaunayGraph(){}
+
         NormAdjustedDelaunayGraph(SpaceInterface<dist_t> *s, size_t max_elements, size_t M = 16, size_t ef_construction = 200,
         size_t random_seed = 100, size_t dim = 10, bool useNormFactor = true) : link_list_locks_(max_elements),
         link_list_update_locks_
