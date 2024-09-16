@@ -21,6 +21,7 @@
 #include "alg.h"
 #include "maria.h"
 #include "bf.h"
+#include "normAdjustedDG.h"
 extern std::string data_fold, index_fold;
 extern std::string data_fold1, data_fold2;
 std::unique_lock<std::mutex>* glock = nullptr;
@@ -66,25 +67,29 @@ int main(int argc, char const* argv[])
 	//hnsw.setEf(500);
 	// mariaV2 maria2(prep, param, index_fold.append(argvStr[2]), parti, data_fold2 + "MyfunctionXTheta.data");
 	mariaV4 mariaV4(prep, param, index_fold + (argvStr[2]), parti, data_fold2 + "MyfunctionXTheta.data");
-	mariaV5 mariaV5(prep, param, index_fold + (argvStr[2]), parti, data_fold2 + "MyfunctionXTheta.data");
-	maria maria(prep, param, index_fold+(argvStr[2]), parti, data_fold2 + "MyfunctionXTheta.data");
-	maria_hcnng maria_hc(prep, param, index_fold+(argvStr[2]), parti, data_fold2 + "MyfunctionXTheta.data");
-	
+	//mariaV5 mariaV5(prep, param, index_fold + (argvStr[2]), parti, data_fold2 + "MyfunctionXTheta.data");
+	//maria maria(prep, param, index_fold+(argvStr[2]), parti, data_fold2 + "MyfunctionXTheta.data");
+
+	//maria_hcnng maria_hc(prep, param, index_fold+(argvStr[2]), parti, data_fold2 + "MyfunctionXTheta.data");
+	//res.push_back(Alg0_maria(maria_hc, c, 100, k, L, K, prep));
+
+	myNADG nadg(prep.data,24,80,200);
 	// mariaV3 maria3(prep, param, index_fold.append(argvStr[2]), parti, data_fold2 + "MyfunctionXTheta.data");
 	//hcnngLite::hcnng<calInnerProductReverse>(dataset, prep.data, data_fold2 + argvStr[2] + "_hcnng", "index_result.txt", minsize_cl, num_cl, max_mst_degree, 0);
-	hcnngLite::hcnng<calInnerProductReverse> hcnng(dataset, prep.data, data_fold2 + argvStr[2] + "_hcnng", "index_result.txt", 
-		minsize_cl, num_cl, max_mst_degree, 1);
-	//hcnngLite::hcnng<calInnerProductReverse> hcnng(dataset, prep.data, data_fold2 + argvStr[2] + "_hcnng", "index_result.txt",
+	//hcnngLite::hcnng<calInnerProductReverse> hcnng(dataset, prep.data, data_fold2 + argvStr[2] + "_hcnng", "index_result.txt", 
 	//	minsize_cl, num_cl, max_mst_degree, 1);
 	//hcnngLite::hcnng<calInnerProductReverse> hcnng(dataset, prep.data, data_fold2 + argvStr[2] + "_hcnng", "index_result.txt",
 	//	minsize_cl, num_cl, max_mst_degree, 1);
-	//res.push_back(Alg0_maria(hcnng, c, 100, k, L, K, prep));
+	//hcnngLite::hcnng<calInnerProductReverse> hcnng(dataset, prep.data, data_fold2 + argvStr[2] + "_hcnng", "index_result.txt",
+	//	minsize_cl, num_cl, max_mst_degree, 1);
 
-	res.push_back(Alg0_maria(maria, c, 100, k, L, K, prep));
-	res.push_back(Alg0_maria(maria_hc, c, 100, k, L, K, prep));
+	//res.push_back(Alg0_maria(hcnng, c, 100, k, L, K, prep));
+	//res.push_back(Alg0_maria(maria, c, 100, k, L, K, prep));
+	
+	res.push_back(Alg0_maria(nadg, c, 100, k, L, K, prep));
 	res.push_back(Alg0_maria(mariaV4, c, 100, k, L, K, prep));
-	res.push_back(Alg0_maria(mariaV5, c, 100, k, L, K, prep));
-	//res.push_back(Alg0_maria(hnsw, c, 100, k, L, K, prep));
+	//res.push_back(Alg0_maria(mariaV5, c, 100, k, L, K, prep));
+	res.push_back(Alg0_maria(hnsw, c, 100, k, L, K, prep));
 	std::vector<int> ms = { 0,100,200,400,800,1200,1600,3200,6400};
 	saveAndShow(c, k, dataset, res);
 
