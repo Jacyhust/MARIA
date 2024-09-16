@@ -360,13 +360,10 @@ namespace hnswlib
                     }
 
                     // Get p_i * p_j
-                    for (int m = 0; m < num_neighbours; m++)
-                    {
-                        for (int n = 0; n < num_neighbours; n++)
-                        {
-                            if (m != n)
-                            {
-                                #pragma omp parallel for reduction(+:pp_sum)
+                    for (int m = 0; m < num_neighbours; m++){
+                        for (int n = 0; n < num_neighbours; n++){
+                            if (m != n){
+                                //#pragma omp parallel for reduction(+:pp_sum)
                                 for (int d = 0; d < dim_; d += 4)
                                 {
                                     pp_sum += neighbours[m][d] * neighbours[n][d] +

@@ -277,8 +277,7 @@ public:
 
             if (normalize == false)
             {
-                ParallelFor(start, rows, num_threads, [&](size_t row, size_t threadId)
-                            {
+                ParallelFor(start, rows, num_threads, [&](size_t row, size_t threadId){
                     size_t id = ids.size() ? ids.at(row) : (cur_l+row);
                     appr_alg->addPoint((float *)data[row], (size_t)id); });
             }
