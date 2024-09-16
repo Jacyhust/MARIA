@@ -4,6 +4,7 @@
 //
 //
 #include "nadglib.h"
+#include "napgalg.h"
 #include <thread>
 
 using nadg = hnswlib::NormAdjustedDelaunayGraph<float>;
@@ -145,8 +146,12 @@ public:
 
 		//
 
+        lsh::timer timer;
+
 		init_new_index(N,M,efC);
 		addItems();
+
+        std::cout << "DAPG1 CONSTRUCTING TIME: " << timer.elapsed() << "s." << std::endl << std::endl;
 	}
 
 	void setEf(size_t ef){
@@ -305,4 +310,237 @@ public:
 	~myNADG() {
 		delete appr_alg;
 	}
+};
+
+using napg = hnswlib::NormAdjustedProximityGraph<float>;
+
+class myNAPG {
+private:
+    std::string index_file;
+    IpSpace* ips = nullptr;
+    napg* appr_alg = nullptr;
+    //Preprocess* prep = nullptr;
+    Data data;
+    std::vector<int> hnsw_maps;//maps between hnsw internel labels and external labels
+public:
+    int N;
+    int dim;
+    // Number of hash functions
+    int S;
+    //#L Tables; 
+    int L;
+    // Dimension of the hash table
+    int K;
+
+    std::string space_name;
+    //size_t dim;
+    //size_t seed;
+    size_t default_ef;
+    bool useNormFactor;
+
+    bool index_inited;
+    bool ep_added;
+    bool normalize;
+    int num_threads_default;
+    hnswlib::labeltype cur_l;
+    IpSpace* l2space = nullptr;
+
+    std::string alg_name = "napg";
+
+    // myNADG(Preprocess& prep_, Parameter& param_, const std::string& file, Partition& part_, const std::string& funtable){
+    // 	N = param_.N;
+    // 	dim = param_.dim;
+    // 	L = param_.L;
+    // 	K = param_.K;
+    // 	S = param_.S;
+    // 	//prep = &prep_;
+    // 	data = prep_.data;
+    // 	//GetHash();
+    // 	buildIndex();
+    // }
+
+    myNAPG(Data& data_, int M, int efC, int ef, bool norm_adjusted_factor = true) {
+        N = data_.N;
+        dim = data_.dim;
+        //L = param_.L;
+        //K = param_.K;
+        //S = param_.S;
+        //prep = &prep_;
+        data = data_;
+        //GetHash();`
+        //buildIndex();
+
+        //
+        l2space = new IpSpace(dim);
+        appr_alg = nullptr;
+        ep_added = true;
+        index_inited = false;
+        num_threads_default = std::thread::hardware_concurrency();
+
+        default_ef = 10;
+        useNormFactor = norm_adjusted_factor;
+
+        //
+
+        lsh::timer timer;
+
+        init_new_index(N, M, efC);
+        addItems();
+
+        std::cout << "DAPG2 CONSTRUCTING TIME: " << timer.elapsed() << "s." << std::endl << std::endl;
+    }
+
+    void setEf(size_t ef) {
+        appr_alg->setEf(ef);
+    }
+
+    int getM() {
+        return appr_alg->maxM0_;
+    }
+
+    void init_new_index(const size_t maxElements, const size_t M, const size_t efConstruction)
+    {
+        if (appr_alg)
+        {
+            throw new std::runtime_error("The index is already initiated.");
+        }
+        cur_l = 0;
+        const size_t seed = 100;
+        appr_alg = new napg(l2space, maxElements, M, efConstruction, seed, dim, useNormFactor);
+
+        index_inited = true;
+        ep_added = false;
+        appr_alg->ef_ = default_ef;
+        //seed = random_seed;
+    }
+
+    void set_num_threads(int num_threads)
+    {
+        this->num_threads_default = num_threads;
+    }
+
+    void saveIndex(const std::string& path_to_index)
+    {
+        appr_alg->saveIndex(path_to_index);
+    }
+
+    void loadIndex(const std::string& path_to_index, size_t max_elements)
+    {
+        if (appr_alg)
+        {
+            std::cerr << "Warning: Calling load_index for an already inited index. Old index is being deallocated.";
+            delete appr_alg;
+        }
+        appr_alg = new napg(l2space, path_to_index, false, max_elements);
+        cur_l = appr_alg->cur_element_count;
+        index_inited = true;
+    }
+
+    void normalize_vector(float* data, float* norm_array)
+    {
+        float norm = 0.0f;
+        for (size_t i = 0; i < dim; i++)
+            norm += data[i] * data[i];
+        norm = 1.0f / (sqrtf(norm) + 1e-30f);
+        for (size_t i = 0; i < dim; i++)
+            norm_array[i] = data[i] * norm;
+    }
+
+    void addItems(int num_threads = -1)
+    {
+        if (num_threads <= 0)
+            num_threads = num_threads_default;
+
+        size_t rows = data.N, features = data.dim;
+
+
+        if (features != dim)
+            throw std::runtime_error("wrong dimensionality of the vectors");
+
+        // avoid using threads when the number of searches is small:
+        if (rows <= num_threads * 4)
+        {
+            num_threads = 1;
+        }
+
+        std::vector<size_t> ids;
+
+        {
+            int start = 0;
+            if (!ep_added)
+            {
+                size_t id = ids.size() ? ids.at(0) : (cur_l);
+                float* vector_data = data[0];
+                std::vector<float> norm_array(dim);
+                if (normalize)
+                {
+                    normalize_vector(vector_data, norm_array.data());
+                    vector_data = norm_array.data();
+                }
+                appr_alg->addPoint((float*)vector_data, (size_t)id);
+                start = 1;
+                ep_added = true;
+            }
+
+            if (useNormFactor) {
+                // Add data to dataset and calculate the adjusting factors
+                for (int row = 0; row < rows; row++) {
+                    appr_alg->addData((float*)data[row], dim);
+                }
+
+                // Calculate norm ranged based factors
+                appr_alg->getNormRangeBasedFactors(data.val);
+            }
+
+            if (normalize == false)
+            {
+                ParallelFor(start, rows, num_threads, [&](size_t row, size_t threadId) {
+                    size_t id = ids.size() ? ids.at(row) : (cur_l + row);
+                    appr_alg->addPoint((float*)data[row], (size_t)id); });
+            }
+            else
+            {
+                std::vector<float> norm_array(num_threads * dim);
+                ParallelFor(start, rows, num_threads, [&](size_t row, size_t threadId)
+                    {
+                        // normalize vector:
+                        size_t start_idx = threadId * dim;
+                        normalize_vector((float*)data[row], (norm_array.data() + start_idx));
+
+                        size_t id = ids.size() ? ids.at(row) : (cur_l + row);
+                        appr_alg->addPoint((float*)(norm_array.data() + start_idx), (size_t)id); });
+            };
+            cur_l += rows;
+        }
+    }
+
+
+
+    void knn(queryN* q) {
+        lsh::timer timer;
+        timer.restart();
+        int ef = appr_alg->ef_;
+        //auto& appr_alg = appr_alg;
+        auto id = 0;
+        auto res = appr_alg->searchKnn(q->queryPoint, q->k + ef);
+
+        while (!res.empty()) {
+            auto top = res.top();
+            res.pop();
+            q->resHeap.emplace(top.second, top.first);
+            while (q->resHeap.size() > q->k) q->resHeap.pop();
+        }
+
+        while (!q->resHeap.empty()) {
+            auto top = q->resHeap.top();
+            q->resHeap.pop();
+            q->res.emplace_back(top.id, 1.0 - top.dist);
+        }
+        std::reverse(q->res.begin(), q->res.end());
+        q->time_total = timer.elapsed();
+    }
+
+    ~myNAPG() {
+        delete appr_alg;
+    }
 };

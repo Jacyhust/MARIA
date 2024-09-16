@@ -9,7 +9,7 @@
 #include "visited_list_pool.h"
 #include "hnswlib.h"
 #include "hnswalg.h"
-#include "basis.h"
+#include "Preprocess.h"
 #include <atomic>
 #include <random>
 #include <stdlib.h>
@@ -164,7 +164,7 @@ namespace hnswlib
         // Variables for NAPG
         size_t budgets;  // Track how much computation is used
         size_t dim_;  // Dimension of the data
-        std::vector<std::vector<float>> dataset;  // Store data before constructing the graph to calculate the factors
+        //std::vector<std::vector<float>> dataset;  // Store data before constructing the graph to calculate the factors
         bool useNormFactor_;  // Whether to use NAPG or not
         int num_subranges = 5;  // Number of subranges
         float range_start_norms[5];  // Norms of the first data in each subrange
@@ -225,56 +225,40 @@ namespace hnswlib
             return data;
         }
 
-        /// @brief Calculate the norm 2 of a vector.
-        /// @param vec Vector to calculate the norm.
-        /// @return Norm 2 of vec.
-        static float vectorNorm(std::vector<float> vec)
-        {
-            return sqrt(cal_inner_product())
-
-            float sum = 0.0;
-            for (float x : vec)
-            {
-                sum += x * x;
-            }
-            return sqrt(sum);
-
-        }
-
         /// @brief Append data to a list inside this class in order to calculate the adjusting factors.
         /// @param data One data point to add.
         /// @param dim Dimension size of the data.
-        void addData(const float *data, size_t id){
-            norms[id]=Res(id,cal_inner_product(data.data,dim_));
+        void addData(float *data, size_t id){
+            norms[id] = Res(id, sqrt(cal_inner_product(data, data, dim_)));
         }
 
-        /// @brief Get the adjusting factor of a data point according to its norm
-        /// @param internalId Id of the data point
-        /// @return Adjusting factor of the data point
-        float getFactor(tableint internalId){
-            size_t dim = *((size_t *)dist_func_param_);
-            char *data_ptrv = getDataByInternalId(internalId);
-            std::vector<float> data;
-            float *data_ptr = (float *)data_ptrv;
-            for (int i = 0; i < dim; i++)
-            {
-                data.push_back(*data_ptr);
-                data_ptr += 1;
-            }
+        ///// @brief Get the adjusting factor of a data point according to its norm
+        ///// @param internalId Id of the data point
+        ///// @return Adjusting factor of the data point
+        //float getFactor(tableint internalId){
+        //    size_t dim = *((size_t *)dist_func_param_);
+        //    char *data_ptrv = getDataByInternalId(internalId);
+        //    std::vector<float> data;
+        //    float *data_ptr = (float *)data_ptrv;
+        //    for (int i = 0; i < dim; i++)
+        //    {
+        //        data.push_back(*data_ptr);
+        //        data_ptr += 1;
+        //    }
 
-            float norm = vectorNorm(data);
+        //    float norm = vectorNorm(data);
 
-            // get which range it belongs to
-            int range_index = 0;
+        //    // get which range it belongs to
+        //    int range_index = 0;
 
-            for (int i = 1; i < 5; i++)
-            {
-                if (norm >= range_start_norms[i])
-                    range_index = i;
-            }
+        //    for (int i = 1; i < 5; i++)
+        //    {
+        //        if (norm >= range_start_norms[i])
+        //            range_index = i;
+        //    }
 
-            return factors[range_index];
-        }
+        //    return factors[range_index];
+        //}
 
         static int getRandomIndice(int low, int high)
         {
@@ -290,12 +274,12 @@ namespace hnswlib
          * 3. Calculate the average of inner product values between all x and their p : xp_mean
          * 4. Calculate the average of inner product values among all x's p : pp_mean
          */
-        void getNormRangeBasedFactors(){
+        void getNormRangeBasedFactors(float** dataset){
             size_t num_data = max_elements_;
 
             // Sort data by norm in ascending order
-            sort(dataset.begin(), dataset.end(), compareNorm);
-
+            //sort(dataset.begin(), dataset.end(), compareNorm);
+            sort(norms.begin(), norms.end());
             // Divide by range
             int index = 0;
             std::vector<int> range_start_indices(num_subranges + 1);
@@ -303,7 +287,7 @@ namespace hnswlib
 
             for (int i = 0; i < num_subranges; i++){
                 range_start_indices[i] = index;
-                range_start_norms[i] = vectorNorm(dataset[index]);
+                range_start_norms[i] = norms[i].dist;
                 index += int(num_data / num_subranges);
             }
             range_start_indices[num_subranges] = num_data - 1;
@@ -322,60 +306,60 @@ namespace hnswlib
                 #pragma omp parallel for reduction(+:xp_sum,pp_sum)
                 for (int sample_index = 0; sample_index < num_samples; sample_index++){
                     int random_indice = getRandomIndice(range_start_indices[i], range_start_indices[i + 1]);
-                    std::vector<float> query;
-                    std::vector<float> neighbours[num_neighbours];
-                    query = dataset[random_indice];
+                    //std::vector<float> query;
+                    int neighbours[num_neighbours];
+                    float* query = dataset[random_indice];
 
                     // get nearest neighbours (p)
                     std::priority_queue<std::pair<dist_t, int>, std::vector<std::pair<dist_t, int>>, CompareByFirst> nearest_neighbours;
-                    for (int n = 0; n < dataset.size(); n++) {
+                    for (int n = 0; n < num_data; n++) {
                       // get inner product
-                      float inner_product = 0;
-                      for (unsigned d = 0; d < dim_; d += 4) {
-                        // Used faster for loop to accelerate this method
-                          inner_product += query[d] * dataset[n][d] +
-                              query[d + 1] * dataset[n][d + 1] +
-                              query[d + 2] * dataset[n][d + 2] +
-                              query[d + 3] * dataset[n][d + 3];
-                      }
+                        float inner_product = cal_inner_product(query, dataset[n], dim_);
+                      //    0;
+                      //for (unsigned d = 0; d < dim_; d += 4) {
+                      //  // Used faster for loop to accelerate this method
+                      //    inner_product += query[d] * dataset[n][d] +
+                      //        query[d + 1] * dataset[n][d + 1] +
+                      //        query[d + 2] * dataset[n][d + 2] +
+                      //        query[d + 3] * dataset[n][d + 3];
+                      //}
                       nearest_neighbours.emplace(inner_product, n);
                     }
 
                     for (int n=0; n<num_neighbours; n++) {
-                      neighbours[n] = dataset[nearest_neighbours.top().second];
-
+                      neighbours[n] = nearest_neighbours.top().second;
+                      xp_sum += nearest_neighbours.top().first;
                       // get x * p
-                      for (int d = 0; d < dim_; d += 4){
-                          xp_sum += query[d] * neighbours[n][d] +
-                              query[d + 1] * neighbours[n][d + 1] +
-                              query[d + 2] * neighbours[n][d + 2] +
-                              query[d + 3] * neighbours[n][d + 3];
-                      }
+                      //for (int d = 0; d < dim_; d += 4){
+                      //    xp_sum += query[d] * neighbours[n][d] +
+                      //        query[d + 1] * neighbours[n][d + 1] +
+                      //        query[d + 2] * neighbours[n][d + 2] +
+                      //        query[d + 3] * neighbours[n][d + 3];
+                      //}
                       nearest_neighbours.pop();
                     }
-
                     // Get p_i * p_j
-                    for (int m = 0; m < num_neighbours; m++){
-                        for (int n = 0; n < num_neighbours; n++){
-                            if (m != n){
-                                //#pragma omp parallel for reduction(+:pp_sum)
-                                for (int d = 0; d < dim_; d += 4)
-                                {
-                                    pp_sum += neighbours[m][d] * neighbours[n][d] +
-                                              neighbours[m][d+1] * neighbours[n][d+1] +
-                                              neighbours[m][d+2] * neighbours[n][d+2] +
-                                              neighbours[m][d+3] * neighbours[n][d+3];
-                                }
-                            }
+                    for (int m = 0; m < num_neighbours; m++) {
+                        for (int n = m + 1; n < num_neighbours; n++) {
+                            pp_sum += cal_inner_product(dataset[neighbours[m]], dataset[neighbours[n]], dim_);
                         }
                     }
                 }
 
                 // Get factor
-                float pp_mean = pp_sum / ((num_neighbours) * (num_neighbours-1));
+                float pp_mean = pp_sum / ((num_neighbours) * (num_neighbours - 1));
                 float xp_mean = xp_sum / num_neighbours;
 
                 factors[i] = pp_mean / xp_mean;
+            }
+
+            for (int i = 0; i < num_subranges; i++) {
+                for (int j = range_start_indices[i]; j < range_start_indices[i + 1]; ++j) {
+                    factor_pre_point[j] = factors[i];
+                }
+                //range_start_indices[i] = index;
+                //range_start_norms[i] = norms[i].dist;
+                //index += int(num_data / num_subranges);
             }
         }
         
@@ -577,8 +561,8 @@ namespace hnswlib
         }
 
         void getNeighborsByHeuristic2(
-            std::priority_queue<std::pair<dist_t, tableint>, std::vector<std::pair<dist_t, tableint>>, CompareByFirst> &top_candidates,
-            const size_t M)
+            std::priority_queue<std::pair<dist_t, tableint>, std::vector<std::pair<dist_t, tableint>>, CompareByFirst>& top_candidates,
+            const size_t M, float fac = 1.0f) 
         {
             if (top_candidates.size() < M)
             {
@@ -603,9 +587,7 @@ namespace hnswlib
                 bool good = true;
 
                 if (useNormFactor_) {
-                    float factor = getFactor(curent_pair.second);
-                    //factor=1.0;
-                    dist_to_query *= factor;
+                    dist_to_query *= fac;
                 }
 
                 for (std::pair<dist_t, tableint> second_pair : return_list)
@@ -653,12 +635,12 @@ namespace hnswlib
             return level == 0 ? get_linklist0(internal_id) : get_linklist(internal_id, level);
         };
 
-        tableint mutuallyConnectNewElement(const void *data_point, tableint cur_c,
-                                           std::priority_queue<std::pair<dist_t, tableint>, std::vector<std::pair<dist_t, tableint>>, CompareByFirst> &top_candidates,
-                                           int level, bool isUpdate)
+        tableint mutuallyConnectNewElement(const void* data_point, tableint cur_c,
+            std::priority_queue<std::pair<dist_t, tableint>, std::vector<std::pair<dist_t, tableint>>, CompareByFirst>& top_candidates,
+            int level, bool isUpdate, float fac = 1.0)
         {
             size_t Mcurmax = level ? maxM_ : maxM0_;
-            getNeighborsByHeuristic2(top_candidates, M_);
+            getNeighborsByHeuristic2(top_candidates, M_, fac);
             if (top_candidates.size() > M_)
                 throw std::runtime_error("Should be not be more than M_ candidates returned by the heuristic");
 
@@ -1214,7 +1196,7 @@ namespace hnswlib
 
                     std::priority_queue<std::pair<dist_t, tableint>, std::vector<std::pair<dist_t, tableint>>, CompareByFirst> top_candidates = searchBaseLayer(
                         currObj, data_point, level);
-                    currObj = mutuallyConnectNewElement(data_point, cur_c, top_candidates, level, false);
+                    currObj = mutuallyConnectNewElement(data_point, cur_c, top_candidates, level, false, factor_pre_point[label]);
                 }
             }
             else
