@@ -165,7 +165,7 @@ namespace hnswlib
         size_t dim_;  // Dimension of the data
         std::vector<std::vector<float>> dataset;  // Store data before constructing the graph to calculate the factors
         bool useNormFactor_;  // Whether to use NAPG or not
-        const int num_subranges = 5;  // Number of subranges
+        int num_subranges = 5;  // Number of subranges
         float range_start_norms[5];  // Norms of the first data in each subrange
         float factors[5];  // Adjusting factors for each subrange
 
@@ -307,7 +307,8 @@ namespace hnswlib
 
             // Divide by range
             int index = 0;
-            int range_start_indices[num_subranges + 1];
+            std::vector<int> range_start_indices(num_subranges + 1);
+            //int range_start_indices[num_subranges + 1];
 
             for (int i = 0; i < num_subranges; i++)
             {
@@ -323,28 +324,26 @@ namespace hnswlib
             std::vector<float> query;
             std::vector<float> neighbours[num_neighbours];
 
-            for (int i = 0; i < num_subranges; i++)
-            {
+            for (int i = 0; i < num_subranges; i++){
                 float xp_sum = 0;
                 float pp_sum = 0;
 
                 #pragma omp parallel for reduction(+:xp_sum,pp_sum)
-                for (int sample_index = 0; sample_index < num_samples; sample_index++)
-                {
+                for (int sample_index = 0; sample_index < num_samples; sample_index++){
                     int random_indice = getRandomIndice(range_start_indices[i], range_start_indices[i + 1]);
                     query = dataset[random_indice];
 
                     // get nearest neighbours (p)
                     std::priority_queue<std::pair<dist_t, int>, std::vector<std::pair<dist_t, int>>, CompareByFirst> nearest_neighbours;
-                    for (int n=0; n<dataset.size(); n++) {
+                    for (int n = 0; n < dataset.size(); n++) {
                       // get inner product
                       float inner_product = 0;
                       for (unsigned d = 0; d < dim_; d += 4) {
                         // Used faster for loop to accelerate this method
-                        inner_product += query[d] * dataset[n][d] +
-                                        query[d+1] * dataset[n][d+1] +
-                                        query[d+2] * dataset[n][d+2] +
-                                        query[d+3] * dataset[n][d+3];
+                          inner_product += query[d] * dataset[n][d] +
+                              query[d + 1] * dataset[n][d + 1] +
+                              query[d + 2] * dataset[n][d + 2] +
+                              query[d + 3] * dataset[n][d + 3];
                       }
                       nearest_neighbours.emplace(inner_product, n);
                     }
@@ -353,12 +352,11 @@ namespace hnswlib
                       neighbours[n] = dataset[nearest_neighbours.top().second];
 
                       // get x * p
-                      for (int d = 0; d < dim_; d += 4)
-                      {
-                        xp_sum += query[d] * neighbours[n][d] +
-                                    query[d+1] * neighbours[n][d+1] +
-                                    query[d+2] * neighbours[n][d+2] +
-                                    query[d+3] * neighbours[n][d+3];
+                      for (int d = 0; d < dim_; d += 4){
+                          xp_sum += query[d] * neighbours[n][d] +
+                              query[d + 1] * neighbours[n][d + 1] +
+                              query[d + 2] * neighbours[n][d + 2] +
+                              query[d + 3] * neighbours[n][d + 3];
                       }
                       nearest_neighbours.pop();
                     }
