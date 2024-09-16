@@ -31,25 +31,23 @@ namespace hnswlib
     //typedef unsigned int tableint;
     //typedef unsigned int linklistsizeint;
 
-
-
     template <typename dist_t>
-    class NormAdjustedDelaunayGraph : public AlgorithmInterface<dist_t>
+    class NormAdjustedProximityGraph : public AlgorithmInterface<dist_t>
     {
     public:
         static const tableint max_update_element_locks = 65536;
 
-        NormAdjustedDelaunayGraph(SpaceInterface<dist_t> *s)
+        NormAdjustedProximityGraph(SpaceInterface<dist_t> *s)
         {
         }
 
-        NormAdjustedDelaunayGraph(SpaceInterface<dist_t> *s, const std::string &location, bool nmslib = false, size_t max_elements = 0)
+        NormAdjustedProximityGraph(SpaceInterface<dist_t> *s, const std::string &location, bool nmslib = false, size_t max_elements = 0)
         {
         }
 
         //~NormAdjustedDelaunayGraph(){}
 
-        NormAdjustedDelaunayGraph(SpaceInterface<dist_t> *s, size_t max_elements, size_t M = 16, size_t ef_construction = 200,
+        NormAdjustedProximityGraph(SpaceInterface<dist_t> *s, size_t max_elements, size_t M = 16, size_t ef_construction = 200,
         size_t random_seed = 100, size_t dim = 10, bool useNormFactor = true) : link_list_locks_(max_elements),
         link_list_update_locks_
         (max_update_element_locks), element_levels_(max_elements)
@@ -96,6 +94,8 @@ namespace hnswlib
             budgets = 0;
             dim_ = dim;
             useNormFactor_ = useNormFactor;
+            norms.resize(max_elements);
+            factor_pre_point.resize(max_elements);
         }
 
         struct CompareByFirst
@@ -107,7 +107,7 @@ namespace hnswlib
             }
         };
 
-        ~NormAdjustedDelaunayGraph()
+        ~NormAdjustedProximityGraph()
         {
 
             free(data_level0_memory_);
@@ -170,6 +170,9 @@ namespace hnswlib
         float range_start_norms[5];  // Norms of the first data in each subrange
         float factors[5];  // Adjusting factors for each subrange
 
+        std::vector<Res> norms;
+        std::vector<float> factor_pre_point;
+
         inline labeltype getExternalLabel(tableint internal_id) const
         {
             labeltype return_label;
@@ -227,7 +230,7 @@ namespace hnswlib
         /// @return Norm 2 of vec.
         static float vectorNorm(std::vector<float> vec)
         {
-            //return sqrt(cal_inner_product())
+            return sqrt(cal_inner_product())
 
             float sum = 0.0;
             for (float x : vec)
@@ -241,29 +244,14 @@ namespace hnswlib
         /// @brief Append data to a list inside this class in order to calculate the adjusting factors.
         /// @param data One data point to add.
         /// @param dim Dimension size of the data.
-        void addData(const float *data, size_t dim)
-        {
-          std::vector<float> data_list;
-          for(int d = 0; d<dim; d++) {
-            data_list.push_back(data[d]);
-          }
-          dataset.push_back(data_list);
-        }
-
-        /// @brief Compare the norm 2 of two vectors. This method is used to sort `dataset`.
-        /// @param data1 First vector to compare.
-        /// @param data2 Second vector to compare.
-        /// @return True if the first vector is smaller than the second vector.
-        static bool compareNorm(std::vector<float> data1, std::vector<float> data2)
-        {
-            return (vectorNorm(data1) < vectorNorm(data2));
+        void addData(const float *data, size_t id){
+            norms[id]=Res(id,cal_inner_product(data.data,dim_));
         }
 
         /// @brief Get the adjusting factor of a data point according to its norm
         /// @param internalId Id of the data point
         /// @return Adjusting factor of the data point
-        float getFactor(tableint internalId)
-        {
+        float getFactor(tableint internalId){
             size_t dim = *((size_t *)dist_func_param_);
             char *data_ptrv = getDataByInternalId(internalId);
             std::vector<float> data;

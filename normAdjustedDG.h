@@ -227,27 +227,6 @@ public:
 
         std::vector<size_t> ids;
 
-        // if (!ids_.is_none())
-        // {
-        //     py::array_t<size_t, py::array::c_style | py::array::forcecast> items(ids_);
-        //     auto ids_numpy = items.request();
-        //     if (ids_numpy.ndim == 1 && ids_numpy.shape[0] == rows)
-        //     {
-        //         std::vector<size_t> ids1(ids_numpy.shape[0]);
-        //         for (size_t i = 0; i < ids1.size(); i++)
-        //         {
-        //             ids1[i] = items.data()[i];
-        //         }
-        //         ids.swap(ids1);
-        //     }
-        //     else if (ids_numpy.ndim == 0 && rows == 1)
-        //     {
-        //         ids.push_back(*items.data());
-        //     }
-        //     else
-        //         throw std::runtime_error("wrong dimensionality of the labels");
-        // }
-
         {
             int start = 0;
             if (!ep_added)
