@@ -333,7 +333,7 @@ namespace hnswlib
                 for (int sample_index = 0; sample_index < num_samples; sample_index++){
                     int random_indice = getRandomIndice(range_start_indices[i], range_start_indices[i + 1]);
                     std::vector<float> query;
-                    std::vector < std::vector<float>> neighbours[num_neighbours];
+                    std::vector<float> neighbours[num_neighbours];
                     query = dataset[random_indice];
 
                     // get nearest neighbours (p)
