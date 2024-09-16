@@ -140,8 +140,8 @@ public:
 		// 		normlizedData[i][j] = prep->data[i][j] / prep->norms[i];
 		// 	}
 		// }
-		// normD.N = N;
-		// normD.dim = dim;
+		normD.N = N;
+		normD.dim = dim;
 		// //normD.val = normlizedData;
 		normD.val=prep->data.val;
 	}
