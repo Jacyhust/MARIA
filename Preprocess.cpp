@@ -23,7 +23,15 @@ Preprocess::Preprocess(const std::string& path, const std::string& ben_file_)
 	lsh::timer timer;
 	std::cout << "LOADING DATA..." << std::endl;
 	timer.restart();
-	load_data(path);
+
+	if(path.find("deep1B")||path.find("yandex")){
+		load_fbin(path+".fbin",data);
+		load_fbin(path+"_query.fbin",queries);
+	} 
+	else load_data(path);
+	
+
+
 	std::cout << "LOADING TIME: " << timer.elapsed() << "s." << std::endl << std::endl;
 	cal_SquareLen();
 
@@ -33,10 +41,10 @@ Preprocess::Preprocess(const std::string& path, const std::string& ben_file_)
 }
 
 void Preprocess::load_data(const std::string& path){
-	std::string file = path + "_new";
+	std::string file = path + ".data_new";
 	std::ifstream in(file.c_str(), std::ios::binary);
 	if (!in) {
-		printf("Fail to open the file!\n");
+		printf("Fail to open the file: %s\n",file.c_str());
 		exit(-1);
 	}
 
@@ -57,6 +65,7 @@ void Preprocess::load_data(const std::string& path){
 		queries.val[i] = new float[queries.dim + 1];
 		in.read((char*)queries.val[i], sizeof(float) * header[2]);
 		queries.val[i][queries.dim] = 0.0f;
+		queries.N=10000;
 	}
 
 	for (int i = 0; i < data.N; ++i) {
@@ -70,6 +79,40 @@ void Preprocess::load_data(const std::string& path){
 	std::cout << "N  =  " << data.N << "\n";
 	std::cout << "dim=  " << data.dim << "\n\n";
 
+	in.close();
+}
+
+void Preprocess::load_fbin(const std::string& path, Data& data){
+	std::string file = path;
+	std::ifstream in(file.c_str(), std::ios::binary);
+	if (!in) {
+		printf("Fail to open the file: %s\n",file.c_str());
+		exit(-1);
+	}
+
+	unsigned int header[2] = {};
+	assert(sizeof header == 2 * 4);
+	in.read((char*)header, sizeof(header));
+	assert(header[0] != 0);
+	data.N = header[0];
+	data.dim = header[1];
+
+	size_t size=((size_t) header[1])*header[0];
+	std::cout << "Load from fbin: " << file << "\n";
+	std::cout << "N   =  " << data.N << "\n";
+	std::cout << "dim =  " << data.dim << "\n";
+	std::cout << "size=  " << size << "\n\n";
+
+	data.base=new float[size];
+	data.val = new float* [data.N];
+
+	in.read((char*)data.base, sizeof(float) * size);
+
+	for (size_t i = 0; i < data.N; ++i) {
+		data.val[i] = data.base+i*data.dim;
+	}
+	
+	std::cout << "Finish Reading File! " << "\n";
 	in.close();
 }
 
@@ -106,23 +149,24 @@ void Preprocess::ben_make()
 		benchmark.innerproduct[j] = new float[benchmark.num];
 	}
 
-	Tuple a;
+	//Tuple a;
 
 	lsh::progress_display pd(benchmark.N);
-	for (int j = 0; j < benchmark.N; j++)
-	{
-		std::vector<Tuple> dists;
-		dists.clear();
-		for (int i = 0; i < data.N; i++)
-		{
-			a.id = i;
-			a.inp = cal_inner_product(data.val[i], queries.val[j], data.dim);
-			dists.push_back(a);
+
+// #pragma omp parallel for
+	for (int j = 0; j < benchmark.N; j++){
+		std::vector<Tuple> dists(data.N);
+		//dists.clear();
+
+#pragma omp parallel for schedule(dynamic,512)
+		for (int i = 0; i < data.N; i++){
+			dists[i].id = i;
+			dists[i].inp = cal_inner_product(data.val[i], queries.val[j], data.dim);
+			//dists[i]=a;
 		}
 
 		sort(dists.begin(), dists.end(), comp);
-		for (int i = 0; i < benchmark.num; i++)
-		{
+		for (int i = 0; i < benchmark.num; i++){
 			benchmark.indice[j][i] = (int)dists[i].id;
 			benchmark.innerproduct[j][i] = dists[i].inp;
 		}

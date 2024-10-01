@@ -20,6 +20,7 @@ public:
 public:
 	Preprocess(const std::string& path, const std::string& ben_file_);
 	void load_data(const std::string& path);
+	void load_fbin(const std::string& path, Data& data);
 	void cal_SquareLen();
 	void ben_make();
 	void ben_save();

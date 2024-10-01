@@ -11,6 +11,8 @@ struct Data
 
 	// No safety checking!!!
 	float*& operator[](int i) { return val[i]; }
+
+	float* base=nullptr;
 };
 
 struct Ben
