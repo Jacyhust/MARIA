@@ -93,7 +93,7 @@ public:
 	
 		for (int i = parti.numChunks - 1; i >= 0; --i) {
 			if ((!q->resHeap.empty()) && (1.0f-q->resHeap.top().dist) > 
-				q->norm * sqrt(parti.MaxLen[i])) break;
+				q->norm * (parti.MaxLen[i])) break;
 
 
 			//apgs[i] = new hnsw(ips, parti.nums[i], M, ef);
@@ -712,7 +712,7 @@ public:
 	
 		for (int i = parti.numChunks - 1; i >= 0; --i) {
 			if ((!q->resHeap.empty()) && (-(q->resHeap.top().dist)) > 
-				q->norm * sqrt(parti.MaxLen[i])) break;
+				q->norm * (parti.MaxLen[i])) break;
 
 
 			//apgs[i] = new hnsw(ips, parti.nums[i], M, ef);
