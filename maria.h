@@ -141,6 +141,7 @@ private:
 	hnsw* apg = nullptr;
 	//Preprocess* prep = nullptr;
 	Data data;
+	std::vector<int> hnsw_maps;//maps between hnsw internel labels and external labels
 public:
 	int N;
 	int dim;
@@ -181,6 +182,41 @@ public:
 		apg->setEf(ef);
 	}
 
+	int getM() {
+		return apg->maxM0_;
+	}
+
+	void buildMap() {
+		hnsw_maps.resize(N, -1);
+		for (int i = 0; i < N; ++i) {
+			size_t uid = (apg->getExternalLabel(i));
+			hnsw_maps[uid] = i;
+		}
+	}
+
+	void getEdgeSet(int pid, int* ptr) {
+		//size_t id = *((size_t*)(apg->getDataByInternalId(pid)));
+		//return (apg->get_linklist0(id));
+		int id = hnsw_maps[pid];
+
+		//for (int i = 0; i < N; ++i) {
+		//	size_t uid = (apg->getExternalLabel(i));
+		//	if ((int)uid == pid) {
+		//		id = i;
+		//		break;
+		//	}
+		//	
+		//}
+
+		int* dptr = (int*)(apg->get_linklist0(id));
+		size_t size = apg->getListCount((unsigned int*)dptr);
+
+		ptr[0] = size;
+		for (size_t j = 1; j <= size; j++) {
+			ptr[j] = apg->getExternalLabel(*(dptr + j));
+		}
+	}
+
 	void buildIndex() {
 		int M = 24;
 		int ef = 40;
@@ -214,6 +250,8 @@ public:
 			float* data0 = data.val[j2];
 			apg->addPoint((void*)(data0), (size_t)j2);
 		}
+
+		std::cout << " Finish building HNSW\n";
 	}
 
 
@@ -221,12 +259,8 @@ public:
 		lsh::timer timer;
 		timer.restart();
 		int ef = apg->ef_;
-		//apgs[i] = new hnsw(ips, parti.nums[i], M, ef);
 		auto& appr_alg = apg;
 		auto id = 0;
-		//auto data0 = data.val[id];
-		//appr_alg->addPoint((void*)(data), (size_t)id);
-		//std::mutex inlock;
 		auto res = appr_alg->searchKnn(q->queryPoint, q->k + ef);
 
 		while (!res.empty()) {
@@ -239,12 +273,9 @@ public:
 		while (!q->resHeap.empty()) {
 			auto top = q->resHeap.top();
 			q->resHeap.pop();
-
-			q->res.emplace_back(top.id, 1.0-top.dist);
+			q->res.emplace_back(top.id, 1.0 - top.dist);
 		}
-
 		std::reverse(q->res.begin(), q->res.end());
-
 		q->time_total = timer.elapsed();
 	}
 
@@ -350,10 +381,6 @@ public:
 		for (int i = 1; i < parti.numChunks; ++i) {
 			//apgs[i] = new hnsw(ips, parti.nums[i], M, ef);
 			auto& appr_alg = apgs[i - 1];
-			//auto id = parti.EachParti[i][0];
-			//auto data = prep->data.val[id];
-			//appr_alg->addPoint((void*)(data), (size_t)id);
-			//std::mutex inlock;
 
 			auto vecsize = parti.nums[i];
 			lsh::timer timer;
@@ -375,7 +402,7 @@ public:
 
 		for (int i = parti.numChunks - 1; i >= 0; --i) {
 			if ((!q->resHeap.empty()) && q->resHeap.top().dist > 
-				q->norm * sqrt(parti.MaxLen[i])) break;
+				q->norm * (parti.MaxLen[i])) break;
 
 			auto& appr_alg = apgs[i];
 			auto res = appr_alg->searchKnn(q->queryPoint, q->k);
@@ -410,7 +437,7 @@ public:
 
 		for (int i = parti.numChunks - 1; i >= 0; --i) {
 			if ((!q->resHeap.empty()) && q->resHeap.top().dist > 
-				q->norm * sqrt(parti.MaxLen[i])) break;
+				q->norm * (parti.MaxLen[i])) break;
 
 			auto& appr_alg = apgs[i];
 			
@@ -578,7 +605,7 @@ public:
 
 		for (int i = parti.numChunks - 1; i >= 0; --i) {
 			if ((!q->resHeap.empty()) && q->resHeap.top().dist >
-				q->norm * sqrt(parti.MaxLen[i])) break;
+				q->norm * (parti.MaxLen[i])) break;
 
 
 			//apgs[i] = new hnsw(ips, parti.nums[i], M, ef);
@@ -644,7 +671,7 @@ public:
 	hc_mips** apgs = nullptr;
 	//HashParam hashpar;
 	//std::vector<int>*** myIndexes;
-
+	int M = 0;
 	//float tmin;
 	//float tstep;
 	//float smin;
@@ -673,6 +700,8 @@ public:
 		int minsize_cl = 500;
 		int num_cl = 10;
 		int max_mst_degree = 3;
+
+		M = num_cl * max_mst_degree;
 
 		apgs = new hc_mips * [parti.numChunks];
 		for (int i = 0; i < parti.numChunks; ++i) {
