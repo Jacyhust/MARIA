@@ -1,11 +1,11 @@
 #include "alg.h"
 
-std::atomic<size_t> _G_COST=0;
+std::atomic<size_t> _G_COST = 0;
 
 #if defined(unix) || defined(__unix__)
 //std::string data_fold = "/home/xizhao/dataset/", index_fold = " ";
-std::string data_fold = "/home/xizhao/dataset/", index_fold = " ";
-std::string data_fold1 = data_fold, data_fold2 = data_fold+("MIPS/");
+std::string data_fold = "/home/xizhao/dataset/", index_fold = "./indexes/";
+std::string data_fold1 = data_fold, data_fold2 = data_fold + ("MIPS/");
 #else
 std::string data_fold = "E:/Dataset_for_c/", index_fold = " ";
 std::string data_fold1 = data_fold;
@@ -43,21 +43,21 @@ void saveAndShow(float c, int k, std::string& dataset, std::vector<resOutput>& r
 	//time_t now = std::time(0);
 	time_t zero_point = 1635153971 - 17 * 3600 - 27 * 60;//Let me set the time at 2021.10.25. 17:27 as the zero point
 	size_t diff = (size_t)(now - zero_point);
-// #if defined(unix) || defined(__unix__)
-// 	llt lt(diff);
-// #endif
+	// #if defined(unix) || defined(__unix__)
+	// 	llt lt(diff);
+	// #endif
 
 	double date = ((float)(now - zero_point)) / 86400;
 	float hour = date - floor(date);
 	hour *= 24;
-	float minute= hour = date - floor(date);
+	float minute = hour = date - floor(date);
 
 
 	std::stringstream ss;
 
 	ss << "*******************************************************************************************************\n"
-		<< "The result of FARGO for " << dataset << " is as follow: c="<<c<<", k="<<k
-		<<"\n"
+		<< "The result of FARGO for " << dataset << " is as follow: c=" << c << ", k=" << k
+		<< "\n"
 		<< "*******************************************************************************************************\n";
 
 	ss << std::setw(12) << "algName"
@@ -86,21 +86,21 @@ void saveAndShow(float c, int k, std::string& dataset, std::vector<resOutput>& r
 		<< ltm->tm_mon + 1 << '-' << ltm->tm_mday << ' ' << ltm->tm_hour << ':' << ltm->tm_min
 		<< "\n*****************************************************************************************************\n\n\n";
 
-// #if defined(unix) || defined(__unix__)
-// 	ss << "\n******************************************************************************************************\n"
-// 		<< "                                                                                    "
-// 		<< lt.date << '-' << lt.h << ':' << lt.m << ':' << lt.s
-// 		<< "\n******************************************************************************************************\n\n\n";
-// #else
-// 	ss << "\n******************************************************************************************************\n"
-// 		<< "                                                                                    "
-// 		<< ltm->tm_mon + 1 << '-' << ltm->tm_mday << ' ' << ltm->tm_hour << ':' << ltm->tm_min
-// 		<< "\n*****************************************************************************************************\n\n\n";
-// #endif
-	
+	// #if defined(unix) || defined(__unix__)
+	// 	ss << "\n******************************************************************************************************\n"
+	// 		<< "                                                                                    "
+	// 		<< lt.date << '-' << lt.h << ':' << lt.m << ':' << lt.s
+	// 		<< "\n******************************************************************************************************\n\n\n";
+	// #else
+	// 	ss << "\n******************************************************************************************************\n"
+	// 		<< "                                                                                    "
+	// 		<< ltm->tm_mon + 1 << '-' << ltm->tm_mday << ' ' << ltm->tm_hour << ':' << ltm->tm_min
+	// 		<< "\n*****************************************************************************************************\n\n\n";
+	// #endif
+
 
 	std::cout << ss.str();
 	os << ss.str();
-	os.close();  delete []ltm;
+	os.close();  delete[]ltm;
 	//delete[] ltm;
 }

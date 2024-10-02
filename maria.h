@@ -2,6 +2,7 @@
 #include "hnswlib.h"
 #include <mutex>
 #include <algorithm>
+#include <fstream>
 using hnsw = hnswlib::HierarchicalNSW<float>;
 extern std::unique_lock<std::mutex>* glock;
 
@@ -142,40 +143,54 @@ class myHNSW {
 	//Preprocess* prep = nullptr;
 	Data data;
 	std::vector<int> hnsw_maps;//maps between hnsw internel labels and external labels
+	float indexing_time = 0;
 	public:
 	int N;
 	int dim;
-	// Number of hash functions
-	int S;
-	//#L Tables; 
-	int L;
-	// Dimension of the hash table
-	int K;
-
+	// // Number of hash functions
+	// int S;
+	// //#L Tables; 
+	// int L;
+	// // Dimension of the hash table
+	// int K;
+	//std::string index_file;
 	std::string alg_name = "hnsw";
 
 	myHNSW(Preprocess& prep_, Parameter& param_, const std::string& file, Partition& part_, const std::string& funtable) {
-		N = param_.N;
-		dim = param_.dim;
-		L = param_.L;
-		K = param_.K;
-		S = param_.S;
-		//prep = &prep_;
-		data = prep_.data;
-		//GetHash();
-		buildIndex();
+		reset(prep_.data, param_, file);
 	}
 
 	myHNSW(Data& data_, Parameter& param_, const std::string& file, Partition& part_, const std::string& funtable) {
+		reset(data_, param_, file);
+	}
+
+	inline bool exists_test(const std::string& name) {
+		//return false;
+		std::ifstream f(name.c_str());
+		return f.good();
+	}
+
+	void reset(Data& data_, Parameter& param_, const std::string& file, bool isbuilt = true) {
 		N = param_.N;
 		dim = param_.dim;
-		L = param_.L;
-		K = param_.K;
-		S = param_.S;
-		//prep = &prep_;
 		data = data_;
-		//GetHash();`
-		buildIndex();
+		index_file = file;
+		if (isbuilt && exists_test(index_file)) {
+			std::cout << "Loading index from " << index_file << ":\n";
+			float mem = (float)getCurrentRSS() / (1024 * 1024);
+			ips = new IpSpace(dim);
+			apg = new hnsw(ips, index_file, false);
+			float memf = (float)getCurrentRSS() / (1024 * 1024);
+			std::cout << "Actual memory usage: " << memf - mem << " Mb \n";
+		}
+		else {
+			buildIndex();
+			std::cout << "Actual memory usage: " << getCurrentRSS() / (1024 * 1024) << " Mb \n";
+			std::cout << "Build time:" << indexing_time << "  seconds.\n";
+			FILE* fp = nullptr;
+			fopen_s(&fp, "./indexes/ipnsw_info.txt", "a");
+			if (fp) fprintf(fp, "%s\nmemory=%f MB, IndexingTime=%f s.\n\n", index_file.c_str(), (float)getCurrentRSS() / (1024 * 1024), indexing_time);
+		}
 	}
 
 	void setEf(size_t ef) {
@@ -195,18 +210,7 @@ class myHNSW {
 	}
 
 	void getEdgeSet(int pid, int* ptr) {
-		//size_t id = *((size_t*)(apg->getDataByInternalId(pid)));
-		//return (apg->get_linklist0(id));
 		int id = hnsw_maps[pid];
-
-		//for (int i = 0; i < N; ++i) {
-		//	size_t uid = (apg->getExternalLabel(i));
-		//	if ((int)uid == pid) {
-		//		id = i;
-		//		break;
-		//	}
-		//	
-		//}
 
 		int* dptr = (int*)(apg->get_linklist0(id));
 		size_t size = apg->getListCount((unsigned int*)dptr);
@@ -223,8 +227,8 @@ class myHNSW {
 		ips = new IpSpace(dim);
 		//apg = new hnsw[parti.numChunks];
 		size_t report_every = N / 20;
-		if (report_every > 1e5) report_every = 1e5;
-
+		if (report_every > 1e5) report_every = N / 100;
+		lsh::timer timer, timer_total;
 		int j1 = 0;
 		apg = new hnsw(ips, N, M, efC);
 		auto id = 0;
@@ -233,8 +237,8 @@ class myHNSW {
 		std::mutex inlock;
 
 		auto vecsize = N;
-		lsh::timer timer;
-#pragma omp parallel for
+
+#pragma omp parallel for schedule(dynamic,256)
 		for (int k = 1; k < vecsize; k++) {
 			size_t j2 = 0;
 #pragma omp critical
@@ -252,6 +256,9 @@ class myHNSW {
 		}
 
 		std::cout << " Finish building HNSW\n";
+
+		indexing_time = timer_total.elapsed();
+		apg->saveIndex(index_file);
 	}
 
 

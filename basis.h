@@ -15,7 +15,7 @@ namespace lsh
 {
 	class progress_display
 	{
-	public:
+		public:
 		explicit progress_display(
 			int long expected_count,
 			std::ostream& os = std::cout,
@@ -34,27 +34,27 @@ namespace lsh
 				<< m_s2 << "|----|----|----|----|----|----|----|----|----|----|"
 				<< std::endl
 				<< m_s3;
-			if (!_expected_count){
+			if (!_expected_count) {
 				_expected_count = 1;
 			}
 		}
-		int long operator += (int long increment){
+		int long operator += (int long increment) {
 			if ((_count += increment) >= _next_tic_count)
 			{
 				display_tic();
 			}
 			return _count;
 		}
-		int long  operator ++ (){
+		int long  operator ++ () {
 			return operator += (1);
 		}
-		int long count() const{
+		int long count() const {
 			return _count;
 		}
-		int long expected_count() const{
+		int long expected_count() const {
 			return _expected_count;
 		}
-	private:
+		private:
 		std::ostream& m_os;
 		const std::string m_s1;
 		const std::string m_s2;
@@ -82,7 +82,7 @@ namespace lsh
 	 */
 	class timer
 	{
-	public:
+		public:
 		timer() : time_begin(std::chrono::steady_clock::now()) {};
 		~timer() {};
 		/**
@@ -100,9 +100,9 @@ namespace lsh
 		double elapsed()
 		{
 			std::chrono::steady_clock::time_point time_end = std::chrono::steady_clock::now();
-			return (std::chrono::duration_cast<std::chrono::microseconds>(time_end - time_begin).count())*1e-6;// / CLOCKS_PER_SEC;
+			return (std::chrono::duration_cast<std::chrono::microseconds>(time_end - time_begin).count()) * 1e-6;// / CLOCKS_PER_SEC;
 		}
-	private:
+		private:
 		std::chrono::steady_clock::time_point time_begin;
 	};
 }
@@ -127,27 +127,27 @@ inline float cal_inner_product(float* v1, float* v2, int dim)
 
 	return calIp_fast(v1, v2, dim);
 #endif
-	
+
 }
 
-inline float cal_cosine_similarity(float* v1, float* v2, int dim, 
-float norm1, float norm2)
+inline float cal_cosine_similarity(float* v1, float* v2, int dim,
+	float norm1, float norm2)
 {
 	++_G_COST;
 #ifdef __AVX2__
 	// printf("here!\n");
 	// exit(-1);
-	return faiss::fvec_inner_product_avx512(v1, v2, dim)/(norm1*norm2);
+	return faiss::fvec_inner_product_avx512(v1, v2, dim) / (norm1 * norm2);
 #else
 	float res = 0.0;
 	for (int i = 0; i < dim; ++i) {
 		res += v1[i] * v2[i];
 	}
-	return res/(norm1*norm2);
+	return res / (norm1 * norm2);
 
-	return calIp_fast(v1, v2, dim)/(norm1*norm2);
+	return calIp_fast(v1, v2, dim) / (norm1 * norm2);
 #endif
-	
+
 }
 
 inline float cal_L2sqr(float* v1, float* v2, int dim)
@@ -164,7 +164,7 @@ inline float cal_L2sqr(float* v1, float* v2, int dim)
 #endif
 
 }
- 
+
 template <class T>
 void clear_2d_array(T** array, int n)
 {
@@ -176,4 +176,50 @@ void clear_2d_array(T** array, int n)
 
 inline float calInnerProductReverse(float* v1, float* v2, int dim) {
 	return -cal_inner_product(v1, v2, dim);
+}
+
+
+// #include <chrono>
+// #include <iostream>
+// #include <fstream>
+// #include <iomanip>
+// #include <cstdio>
+#include <unistd.h>
+/**
+* Returns the current resident set size (physical memory use) measured
+* in bytes, or zero if the value cannot be determined on this OS.
+*/
+inline size_t getCurrentRSS() {
+#if defined(_WIN32)
+	/* Windows -------------------------------------------------- */
+	PROCESS_MEMORY_COUNTERS info;
+	GetProcessMemoryInfo(GetCurrentProcess(), &info, sizeof(info));
+	return (size_t)info.WorkingSetSize;
+
+#elif defined(__APPLE__) && defined(__MACH__)
+	/* OSX ------------------------------------------------------ */
+	struct mach_task_basic_info info;
+	mach_msg_type_number_t infoCount = MACH_TASK_BASIC_INFO_COUNT;
+	if (task_info(mach_task_self(), MACH_TASK_BASIC_INFO,
+		(task_info_t)&info, &infoCount) != KERN_SUCCESS)
+		return (size_t)0L;      /* Can't access? */
+	return (size_t)info.resident_size;
+
+#elif defined(__linux__) || defined(__linux) || defined(linux) || defined(__gnu_linux__)
+	/* Linux ---------------------------------------------------- */
+	long rss = 0L;
+	FILE* fp = NULL;
+	if ((fp = fopen("/proc/self/statm", "r")) == NULL)
+		return (size_t)0L;      /* Can't open? */
+	if (fscanf(fp, "%*s%ld", &rss) != 1) {
+		fclose(fp);
+		return (size_t)0L;      /* Can't read? */
+	}
+	fclose(fp);
+	return (size_t)rss * (size_t)sysconf(_SC_PAGESIZE);
+
+#else
+	/* AIX, BSD, Solaris, and Unknown OS ------------------------ */
+	return (size_t)0L;          /* Unsupported. */
+#endif
 }
