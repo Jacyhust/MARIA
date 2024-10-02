@@ -7,29 +7,29 @@ extern std::unique_lock<std::mutex>* glock;
 
 class maria
 {
-private:
+	private:
 	std::string index_file;
 
-public:
+	public:
 	int N;
 	int dim;
 	int S;
 	int L;
 	int K;
- 
+
 	std::string alg_name = "maria";
 	Partition parti;
 	Preprocess* prep = nullptr;
 	IpSpace* ips = nullptr;
 	hnsw** apgs = nullptr;
-public:
+	public:
 	maria(Preprocess& prep_, Parameter& param_, const std::string& file, Partition& part_, const std::string& funtable) :parti(part_) {
 		N = param_.N;
 		dim = param_.dim + 1;
 		L = param_.L;
 		K = param_.K;
 		S = param_.S;
-		prep=&prep_; 
+		prep = &prep_;
 		randomXT();
 		buildIndex();
 	}
@@ -38,7 +38,7 @@ public:
 		int M = 24;
 		int ef = 40;
 		ips = new IpSpace(dim);
-		apgs = new hnsw* [parti.numChunks];
+		apgs = new hnsw * [parti.numChunks];
 		size_t report_every = N / 20;
 		if (report_every > 1e5) report_every = 1e5;
 
@@ -90,9 +90,9 @@ public:
 	void knn(queryN* q) {
 		lsh::timer timer;
 		timer.restart();
-	
+
 		for (int i = parti.numChunks - 1; i >= 0; --i) {
-			if ((!q->resHeap.empty()) && (1.0f-q->resHeap.top().dist) > 
+			if ((!q->resHeap.empty()) && (1.0f - q->resHeap.top().dist) >
 				q->norm * (parti.MaxLen[i])) break;
 
 
@@ -110,15 +110,15 @@ public:
 				q->resHeap.emplace(top.second, top.first);
 				while (q->resHeap.size() > q->k) q->resHeap.pop();
 			}
-			
+
 		}
 
 		while (!q->resHeap.empty()) {
 			auto top = q->resHeap.top();
 			q->resHeap.pop();
-			q->res.emplace_back(top.id, 1.0-top.dist);
+			q->res.emplace_back(top.id, 1.0 - top.dist);
 		}
-		
+
 		std::reverse(q->res.begin(), q->res.end());
 
 		q->time_total = timer.elapsed();
@@ -135,14 +135,14 @@ public:
 };
 
 class myHNSW {
-private:
+	private:
 	std::string index_file;
 	IpSpace* ips = nullptr;
 	hnsw* apg = nullptr;
 	//Preprocess* prep = nullptr;
 	Data data;
 	std::vector<int> hnsw_maps;//maps between hnsw internel labels and external labels
-public:
+	public:
 	int N;
 	int dim;
 	// Number of hash functions
@@ -154,7 +154,7 @@ public:
 
 	std::string alg_name = "hnsw";
 
-	myHNSW(Preprocess& prep_, Parameter& param_, const std::string& file, Partition& part_, const std::string& funtable){
+	myHNSW(Preprocess& prep_, Parameter& param_, const std::string& file, Partition& part_, const std::string& funtable) {
 		N = param_.N;
 		dim = param_.dim;
 		L = param_.L;
@@ -178,7 +178,7 @@ public:
 		buildIndex();
 	}
 
-	void setEf(size_t ef){
+	void setEf(size_t ef) {
 		apg->setEf(ef);
 	}
 
@@ -219,14 +219,14 @@ public:
 
 	void buildIndex() {
 		int M = 24;
-		int ef = 40;
+		int efC = 80;
 		ips = new IpSpace(dim);
 		//apg = new hnsw[parti.numChunks];
 		size_t report_every = N / 20;
 		if (report_every > 1e5) report_every = 1e5;
 
 		int j1 = 0;
-		apg = new hnsw(ips, N, M, ef);
+		apg = new hnsw(ips, N, M, efC);
 		auto id = 0;
 		auto data0 = data.val[id];
 		apg->addPoint((void*)(data0), (size_t)id);
@@ -259,6 +259,7 @@ public:
 		lsh::timer timer;
 		timer.restart();
 		int ef = apg->ef_;
+		ef = 200;
 		auto& appr_alg = apg;
 		auto id = 0;
 		auto res = appr_alg->searchKnn(q->queryPoint, q->k + ef);
@@ -286,10 +287,10 @@ public:
 
 class mariaV2
 {
-private:
+	private:
 	std::string index_file;
 
-public:
+	public:
 	int N;
 	int dim;
 	// Number of hash functions
@@ -306,7 +307,7 @@ public:
 
 	std::vector<int> interEdges;
 	std::string alg_name = "mariaV2";
-public:
+	public:
 	mariaV2(Preprocess& prep_, Parameter& param_, const std::string& file, Partition& part_, const std::string& funtable) :parti(part_) {
 		N = param_.N;
 		dim = param_.dim + 1;
@@ -377,7 +378,7 @@ public:
 
 	void interConnect() {
 		interEdges.resize(N, 0);
-		
+
 		for (int i = 1; i < parti.numChunks; ++i) {
 			//apgs[i] = new hnsw(ips, parti.nums[i], M, ef);
 			auto& appr_alg = apgs[i - 1];
@@ -387,7 +388,7 @@ public:
 #pragma omp parallel for
 			for (int k = 0; k < vecsize; k++) {
 				auto id = parti.EachParti[i][k];
-				auto data = prep->data.val[id];	
+				auto data = prep->data.val[id];
 				auto res = appr_alg->searchKnnWithDist(data, 1, cal_L2sqr_hnsw);
 
 				interEdges[id] = res.top().second;
@@ -401,7 +402,7 @@ public:
 		timer.restart();
 
 		for (int i = parti.numChunks - 1; i >= 0; --i) {
-			if ((!q->resHeap.empty()) && q->resHeap.top().dist > 
+			if ((!q->resHeap.empty()) && q->resHeap.top().dist >
 				q->norm * (parti.MaxLen[i])) break;
 
 			auto& appr_alg = apgs[i];
@@ -436,12 +437,12 @@ public:
 		Res nn0 = Res(-1, -FLT_MAX);
 
 		for (int i = parti.numChunks - 1; i >= 0; --i) {
-			if ((!q->resHeap.empty()) && q->resHeap.top().dist > 
+			if ((!q->resHeap.empty()) && q->resHeap.top().dist >
 				q->norm * (parti.MaxLen[i])) break;
 
 			auto& appr_alg = apgs[i];
-			
-			if (ep_id >= appr_alg->max_elements_|| ep_id < 0) {
+
+			if (ep_id >= appr_alg->max_elements_ || ep_id < 0) {
 				std::cerr << ep_id << "  Illegal id!\n";
 				exit(-1);
 			}
@@ -455,31 +456,31 @@ public:
 				if (parti.chunks[appr_alg->getExternalLabel(top.second)] != i) {
 					std::cerr << "  Finding wrong points!\n";
 				}
-				if(res.size()==1){
-					nn0=Res(appr_alg->getExternalLabel(top.second), top.first);
+				if (res.size() == 1) {
+					nn0 = Res(appr_alg->getExternalLabel(top.second), top.first);
 					// if(1.0f-top.first>nn0.dist){
 					// 	nn0=
 					// }
 				}
 				res.pop();
-				
+
 				q->resHeap.emplace(appr_alg->getExternalLabel(top.second), top.first);
 				while (q->resHeap.size() > q->k) q->resHeap.pop();
 
-				
+
 			}
 
 			ep_id = interEdges[nn0.id];
 			ep_id = orders_in_Parti[ep_id];
 
-			
+
 		}
 
 		while (!q->resHeap.empty()) {
 			auto top = q->resHeap.top();
 			q->resHeap.pop();
 
-			q->res.emplace_back(top.id, 1.0-top.dist);
+			q->res.emplace_back(top.id, 1.0 - top.dist);
 		}
 
 		std::reverse(q->res.begin(), q->res.end());
@@ -497,14 +498,14 @@ public:
 	}
 };
 
-using hc_mips=hcnngLite::hcnng<calInnerProductReverse>;
+using hc_mips = hcnngLite::hcnng<calInnerProductReverse>;
 
 class mariaV3
 {
-private:
+	private:
 	std::string index_file;
 
-public:
+	public:
 	int N;
 	int dim;
 	// Number of hash functions
@@ -532,7 +533,7 @@ public:
 
 	//void load_funtable(const std::string& file);
 	std::string alg_name = "mariaV3";
-public:
+	public:
 	mariaV3(Preprocess& prep_, Parameter& param_, const std::string& file, Partition& part_, const std::string& funtable) :parti(part_) {
 		N = param_.N;
 		dim = param_.dim + 1;
@@ -650,10 +651,10 @@ public:
 
 class maria_hcnng
 {
-private:
+	private:
 	std::string index_file;
 
-public:
+	public:
 	int N;
 	int dim;
 	// Number of hash functions
@@ -681,22 +682,22 @@ public:
 	//float** phi;
 
 	//void load_funtable(const std::string& file);
-public:
+	public:
 	maria_hcnng(Preprocess& prep_, Parameter& param_, const std::string& file, Partition& part_, const std::string& funtable) :parti(part_) {
 		N = param_.N;
 		dim = param_.dim + 1;
 		L = param_.L;
 		K = param_.K;
 		S = param_.S;
-		prep=&prep_; 
-		index_file=file;
+		prep = &prep_;
+		index_file = file;
 
 		randomXT();
 		buildIndex();
 	}
 
-	
-	void buildIndex(){
+
+	void buildIndex() {
 		int minsize_cl = 500;
 		int num_cl = 10;
 		int max_mst_degree = 3;
@@ -713,7 +714,7 @@ public:
 				data.val[j] = prep->data.val[parti.EachParti[i][j]];
 			}
 
-			apgs[i] = new hc_mips(index_file + std::to_string(i), data, "indexes/"+index_file + std::to_string(i),
+			apgs[i] = new hc_mips(index_file + std::to_string(i), data, "indexes/" + index_file + std::to_string(i),
 				"index_result.txt", minsize_cl, num_cl, max_mst_degree, 1);
 		}
 	}
@@ -738,9 +739,9 @@ public:
 	void knn(queryN* q) {
 		lsh::timer timer;
 		timer.restart();
-	
+
 		for (int i = parti.numChunks - 1; i >= 0; --i) {
-			if ((!q->resHeap.empty()) && (-(q->resHeap.top().dist)) > 
+			if ((!q->resHeap.empty()) && (-(q->resHeap.top().dist)) >
 				q->norm * (parti.MaxLen[i])) break;
 
 
@@ -753,14 +754,14 @@ public:
 			appr_alg->knn4maria(q, parti.EachParti[i], start, ef);
 		}
 
-		while (q->resHeap.size()>q->k) q->resHeap.pop();
+		while (q->resHeap.size() > q->k) q->resHeap.pop();
 
 		while (!q->resHeap.empty()) {
 			auto top = q->resHeap.top();
 			q->resHeap.pop();
 			q->res.emplace_back(top.id, -top.dist);
 		}
-		
+
 		std::reverse(q->res.begin(), q->res.end());
 
 		q->time_total = timer.elapsed();

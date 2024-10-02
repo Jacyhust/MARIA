@@ -12,6 +12,7 @@
 #include<algorithm>
 
 #define CANDIDATES 100
+#define NUM_COURS 160
 #define E 2.718281746
 #define PI 3.1415926
 #define MAXSIZE 409600
@@ -24,12 +25,12 @@ Preprocess::Preprocess(const std::string& path, const std::string& ben_file_)
 	std::cout << "LOADING DATA..." << std::endl;
 	timer.restart();
 
-	if(path.find("deep1B")||path.find("yandex")){
-		load_fbin(path+".fbin",data);
-		load_fbin(path+"_query.fbin",queries);
-	} 
+	if (path.find("deep1B") != std::string::npos || path.find("yandex") != std::string::npos) {
+		load_fbin(path + ".fbin", data);
+		load_fbin(path + "_query.fbin", queries);
+	}
 	else load_data(path);
-	
+
 
 
 	std::cout << "LOADING TIME: " << timer.elapsed() << "s." << std::endl << std::endl;
@@ -40,11 +41,11 @@ Preprocess::Preprocess(const std::string& path, const std::string& ben_file_)
 	ben_create();
 }
 
-void Preprocess::load_data(const std::string& path){
+void Preprocess::load_data(const std::string& path) {
 	std::string file = path + ".data_new";
 	std::ifstream in(file.c_str(), std::ios::binary);
 	if (!in) {
-		printf("Fail to open the file: %s\n",file.c_str());
+		printf("Fail to open the file: %s\n", file.c_str());
 		exit(-1);
 	}
 
@@ -65,7 +66,7 @@ void Preprocess::load_data(const std::string& path){
 		queries.val[i] = new float[queries.dim + 1];
 		in.read((char*)queries.val[i], sizeof(float) * header[2]);
 		queries.val[i][queries.dim] = 0.0f;
-		queries.N=10000;
+		//queries.N = 10000;
 	}
 
 	for (int i = 0; i < data.N; ++i) {
@@ -73,7 +74,7 @@ void Preprocess::load_data(const std::string& path){
 		in.read((char*)data.val[i], sizeof(float) * header[2]);
 		data.val[i][data.dim] = 0.0f;
 	}
-	
+
 	std::cout << "Load from new file: " << file << "\n";
 	std::cout << "Nq =  " << queries.N << "\n";
 	std::cout << "N  =  " << data.N << "\n";
@@ -82,11 +83,11 @@ void Preprocess::load_data(const std::string& path){
 	in.close();
 }
 
-void Preprocess::load_fbin(const std::string& path, Data& data){
+void Preprocess::load_fbin(const std::string& path, Data& data) {
 	std::string file = path;
 	std::ifstream in(file.c_str(), std::ios::binary);
 	if (!in) {
-		printf("Fail to open the file: %s\n",file.c_str());
+		printf("Fail to open the file: %s\n", file.c_str());
 		exit(-1);
 	}
 
@@ -97,21 +98,21 @@ void Preprocess::load_fbin(const std::string& path, Data& data){
 	data.N = header[0];
 	data.dim = header[1];
 
-	size_t size=((size_t) header[1])*header[0];
+	size_t size = ((size_t)header[1]) * header[0];
 	std::cout << "Load from fbin: " << file << "\n";
 	std::cout << "N   =  " << data.N << "\n";
 	std::cout << "dim =  " << data.dim << "\n";
 	std::cout << "size=  " << size << "\n\n";
 
-	data.base=new float[size];
+	data.base = new float[size];
 	data.val = new float* [data.N];
 
 	in.read((char*)data.base, sizeof(float) * size);
 
 	for (size_t i = 0; i < data.N; ++i) {
-		data.val[i] = data.base+i*data.dim;
+		data.val[i] = data.base + i * data.dim;
 	}
-	
+
 	std::cout << "Finish Reading File! " << "\n";
 	in.close();
 }
@@ -144,7 +145,7 @@ void Preprocess::ben_make()
 	benchmark.N = 100, benchmark.num = 100;
 	benchmark.indice = new int* [benchmark.N];
 	benchmark.innerproduct = new float* [benchmark.N];
-	for (int j = 0; j < benchmark.N; j++){
+	for (int j = 0; j < benchmark.N; j++) {
 		benchmark.indice[j] = new int[benchmark.num];
 		benchmark.innerproduct[j] = new float[benchmark.num];
 	}
@@ -153,20 +154,39 @@ void Preprocess::ben_make()
 
 	lsh::progress_display pd(benchmark.N);
 
-// #pragma omp parallel for
-	for (int j = 0; j < benchmark.N; j++){
+	// #pragma omp parallel for
+	for (int j = 0; j < benchmark.N; j++) {
 		std::vector<Tuple> dists(data.N);
 		//dists.clear();
 
 #pragma omp parallel for schedule(dynamic,512)
-		for (int i = 0; i < data.N; i++){
+		for (int i = 0; i < data.N; i++) {
 			dists[i].id = i;
 			dists[i].inp = cal_inner_product(data.val[i], queries.val[j], data.dim);
 			//dists[i]=a;
 		}
 
+
+		int nsort = data.N / NUM_COURS;//our cpu server has 160 cores.
+#pragma omp parallel for schedule(dynamic,1)
+		for (int i = 0;i < NUM_COURS;++i) {
+			sort(dists.begin() + i * nsort, dists.begin() + (i + 1) * nsort, comp);
+		}
+
+		int nrest = benchmark.num * NUM_COURS + data.N - nsort * NUM_COURS;
+		//std::vector<Tuple> dist_rest(nrest);
+		for (int i = 1;i < NUM_COURS;++i) {
+			memcpy(dists.data() + i * benchmark.num, dists.data() + i * nsort, sizeof(Tuple) * benchmark.num);
+		}
+
+		if (data.N - nsort * NUM_COURS > 0)
+			memcpy(dists.data() + NUM_COURS * benchmark.num, dists.data() + NUM_COURS * nsort,
+				sizeof(Tuple) * (data.N - nsort * NUM_COURS));
+
+		dists.resize(nrest);
+
 		sort(dists.begin(), dists.end(), comp);
-		for (int i = 0; i < benchmark.num; i++){
+		for (int i = 0; i < benchmark.num; i++) {
 			benchmark.indice[j][i] = (int)dists[i].id;
 			benchmark.innerproduct[j][i] = dists[i].inp;
 		}
@@ -258,7 +278,7 @@ Partition::Partition(float c_, Preprocess& prep)
 {
 	ratio = 0.95;
 	float c0_ = 1.5f;
-	
+
 	make_chunks_fargo(prep);
 }
 
@@ -279,7 +299,7 @@ void Partition::make_chunks_fargo(Preprocess& prep)
 	numChunks = 0;
 	chunks.resize(N_);
 	int j = 0;
-	while (j < N_){
+	while (j < N_) {
 		float M = distpairs[j].dist / ratio;
 		cnt = 0;
 		bucket.clear();
@@ -311,7 +331,7 @@ void Partition::make_chunks_maria(Preprocess& prep)
 	//Dist_id pair;
 	int N_ = prep.data.N;
 	int n;
-	for (int j = 0; j < N_; j++){
+	for (int j = 0; j < N_; j++) {
 		distpairs.emplace_back(j, prep.norms[j]);
 	}
 	std::sort(distpairs.begin(), distpairs.end());
@@ -319,11 +339,11 @@ void Partition::make_chunks_maria(Preprocess& prep)
 	numChunks = 0;
 	chunks.resize(N_);
 	int j = 0;
-	while (j < N_){
+	while (j < N_) {
 		float M = distpairs[j].dist / ratio;
 		n = 0;
 		bucket.clear();
-		while (j < N_){
+		while (j < N_) {
 			if ((distpairs[j].dist > M || n >= MAXSIZE)) break;
 
 			chunks[distpairs[j].id] = numChunks;
@@ -389,7 +409,7 @@ Parameter::Parameter(Preprocess& prep, int L_, int K_, int M_, float U_)
 	U = U_;
 }
 
-Parameter::Parameter(Preprocess& prep, int L_, int K_, int M_, float U_,float W_)
+Parameter::Parameter(Preprocess& prep, int L_, int K_, int M_, float U_, float W_)
 {
 	N = prep.data.N;
 	dim = prep.data.dim;
