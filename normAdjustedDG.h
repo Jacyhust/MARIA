@@ -43,31 +43,32 @@ inline void ParallelFor(size_t start, size_t end, size_t numThreads, Function fn
         for (size_t threadId = 0; threadId < numThreads; ++threadId)
         {
             threads.push_back(std::thread([&, threadId]
-                                          {
-                while (true) {
-                    size_t id = current.fetch_add(1);
+                {
+                    while (true) {
+                        size_t id = current.fetch_add(1);
 
-                    if ((id >= end)) {
-                        break;
-                    }
+                        if ((id >= end)) {
+                            break;
+                        }
 
-                    try {
-                        fn(id, threadId);
-                    } catch (...) {
-                        std::unique_lock<std::mutex> lastExcepLock(lastExceptMutex);
-                        lastException = std::current_exception();
-                        /*
-                         * This will work even when current is the largest value that
-                         * size_t can fit, because fetch_add returns the previous value
-                         * before the increment (what will result in overflow
-                         * and produce 0 instead of current + 1).
-                         */
-                        current = end;
-                        break;
-                    }
-                } }));
+                        try {
+                            fn(id, threadId);
+                        }
+                        catch (...) {
+                            std::unique_lock<std::mutex> lastExcepLock(lastExceptMutex);
+                            lastException = std::current_exception();
+                            /*
+                             * This will work even when current is the largest value that
+                             * size_t can fit, because fetch_add returns the previous value
+                             * before the increment (what will result in overflow
+                             * and produce 0 instead of current + 1).
+                             */
+                            current = end;
+                            break;
+                        }
+                    } }));
         }
-        for (auto &thread : threads)
+        for (auto& thread : threads)
         {
             thread.join();
         }
@@ -79,64 +80,58 @@ inline void ParallelFor(size_t start, size_t end, size_t numThreads, Function fn
 }
 
 class myNADG {
-private:
-	std::string index_file;
-	IpSpace* ips = nullptr;
-	nadg* appr_alg = nullptr;
-	//Preprocess* prep = nullptr;
-	Data data;
-	std::vector<int> hnsw_maps;//maps between hnsw internel labels and external labels
-public:
-	int N;
-	int dim;
-	// Number of hash functions
-	int S;
-	//#L Tables; 
-	int L;
-	// Dimension of the hash table
-	int K;
+    private:
+    std::string index_file;
+    IpSpace* ips = nullptr;
+    nadg* appr_alg = nullptr;
+    //Preprocess* prep = nullptr;
+    Data data;
+    std::vector<int> hnsw_maps;//maps between hnsw internel labels and external labels
+    public:
+    int N;
+    int dim;
+    // Number of hash functions
+    int S;
+    //#L Tables; 
+    int L;
+    // Dimension of the hash table
+    int K;
 
-	std::string space_name;
+    std::string space_name;
     //size_t dim;
     //size_t seed;
     size_t default_ef;
     bool useNormFactor;
-    
+
     bool index_inited;
     bool ep_added;
     bool normalize;
     int num_threads_default;
     hnswlib::labeltype cur_l;
-	IpSpace *l2space=nullptr;
+    IpSpace* l2space = nullptr;
 
-	std::string alg_name = "nadg";
+    std::string alg_name = "nadg";
 
-	// myNADG(Preprocess& prep_, Parameter& param_, const std::string& file, Partition& part_, const std::string& funtable){
-	// 	N = param_.N;
-	// 	dim = param_.dim;
-	// 	L = param_.L;
-	// 	K = param_.K;
-	// 	S = param_.S;
-	// 	//prep = &prep_;
-	// 	data = prep_.data;
-	// 	//GetHash();
-	// 	buildIndex();
-	// }
+    // myNADG(Preprocess& prep_, Parameter& param_, const std::string& file, Partition& part_, const std::string& funtable){
+    // 	N = param_.N;
+    // 	dim = param_.dim;
+    // 	L = param_.L;
+    // 	K = param_.K;
+    // 	S = param_.S;
+    // 	//prep = &prep_;
+    // 	data = prep_.data;
+    // 	//GetHash();
+    // 	buildIndex();
+    // }
 
-	myNADG(Data& data_, int M, int efC, int ef, bool norm_adjusted_factor=true) {
-		N = data_.N;
-		dim = data_.dim;
-		//L = param_.L;
-		//K = param_.K;
-		//S = param_.S;
-		//prep = &prep_;
-		data = data_;
-		//GetHash();`
-		//buildIndex();
+    myNADG(Data& data_, int M, int efC, int ef, bool norm_adjusted_factor = true) {
+        N = data_.N;
+        dim = data_.dim;
+        data = data_;
 
-		//
-		l2space = new IpSpace(dim);
-		appr_alg = nullptr;
+        //
+        l2space = new IpSpace(dim);
+        appr_alg = nullptr;
         ep_added = true;
         index_inited = false;
         num_threads_default = std::thread::hardware_concurrency();
@@ -144,33 +139,35 @@ public:
         default_ef = 10;
         useNormFactor = norm_adjusted_factor;
 
-		//
+        //
 
         lsh::timer timer;
 
-		init_new_index(N,M,efC);
-		addItems();
+
+
+        init_new_index(N, M, efC);
+        addItems();
 
         std::cout << "DAPG1 CONSTRUCTING TIME: " << timer.elapsed() << "s." << std::endl << std::endl;
-	}
+    }
 
-	void setEf(size_t ef){
-		appr_alg->setEf(ef);
-	}
+    void setEf(size_t ef) {
+        appr_alg->setEf(ef);
+    }
 
-	int getM() {
-		return appr_alg->maxM0_;
-	}
+    int getM() {
+        return appr_alg->maxM0_;
+    }
 
-	void init_new_index(const size_t maxElements, const size_t M, const size_t efConstruction)
+    void init_new_index(const size_t maxElements, const size_t M, const size_t efConstruction)
     {
         if (appr_alg)
         {
             throw new std::runtime_error("The index is already initiated.");
         }
         cur_l = 0;
-		const size_t seed=100;
-        appr_alg = new nadg(l2space, maxElements, M, efConstruction, seed, dim,useNormFactor);
+        const size_t seed = 100;
+        appr_alg = new nadg(l2space, maxElements, M, efConstruction, seed, dim, useNormFactor);
 
         index_inited = true;
         ep_added = false;
@@ -178,17 +175,17 @@ public:
         //seed = random_seed;
     }
 
-	void set_num_threads(int num_threads)
+    void set_num_threads(int num_threads)
     {
         this->num_threads_default = num_threads;
     }
 
-    void saveIndex(const std::string &path_to_index)
+    void saveIndex(const std::string& path_to_index)
     {
         appr_alg->saveIndex(path_to_index);
     }
 
-    void loadIndex(const std::string &path_to_index, size_t max_elements)
+    void loadIndex(const std::string& path_to_index, size_t max_elements)
     {
         if (appr_alg)
         {
@@ -200,7 +197,7 @@ public:
         index_inited = true;
     }
 
-	void normalize_vector(float *data, float *norm_array)
+    void normalize_vector(float* data, float* norm_array)
     {
         float norm = 0.0f;
         for (size_t i = 0; i < dim; i++)
@@ -210,15 +207,15 @@ public:
             norm_array[i] = data[i] * norm;
     }
 
-	 void addItems(int num_threads = -1)
+    void addItems(int num_threads = -1)
     {
         //py::array_t<dist_t, py::array::c_style | py::array::forcecast> items(input);
         //auto buffer = items.request();
-		//auto buffer=data;
+        //auto buffer=data;
         if (num_threads <= 0)
             num_threads = num_threads_default;
 
-        size_t rows=data.N, features=data.dim;
+        size_t rows = data.N, features = data.dim;
 
 
         if (features != dim)
@@ -237,22 +234,22 @@ public:
             if (!ep_added)
             {
                 size_t id = ids.size() ? ids.at(0) : (cur_l);
-                float *vector_data = data[0];
+                float* vector_data = data[0];
                 std::vector<float> norm_array(dim);
                 if (normalize)
                 {
                     normalize_vector(vector_data, norm_array.data());
                     vector_data = norm_array.data();
                 }
-                appr_alg->addPoint((float *)vector_data, (size_t)id);
+                appr_alg->addPoint((float*)vector_data, (size_t)id);
                 start = 1;
                 ep_added = true;
             }
 
             if (useNormFactor) {
                 // Add data to dataset and calculate the adjusting factors
-                for(int row = 0; row<rows; row++) {
-                  appr_alg->addData((float *)data[row], dim);
+                for (int row = 0; row < rows; row++) {
+                    appr_alg->addData((float*)data[row], dim);
                 }
 
                 // Calculate norm ranged based factors
@@ -261,21 +258,21 @@ public:
 
             if (normalize == false)
             {
-                ParallelFor(start, rows, num_threads, [&](size_t row, size_t threadId){
-                    size_t id = ids.size() ? ids.at(row) : (cur_l+row);
-                    appr_alg->addPoint((float *)data[row], (size_t)id); });
+                ParallelFor(start, rows, num_threads, [&](size_t row, size_t threadId) {
+                    size_t id = ids.size() ? ids.at(row) : (cur_l + row);
+                    appr_alg->addPoint((float*)data[row], (size_t)id); });
             }
             else
             {
                 std::vector<float> norm_array(num_threads * dim);
                 ParallelFor(start, rows, num_threads, [&](size_t row, size_t threadId)
-                            {
-                    // normalize vector:
-                    size_t start_idx = threadId * dim;
-                    normalize_vector((float *) data[row], (norm_array.data()+start_idx));
+                    {
+                        // normalize vector:
+                        size_t start_idx = threadId * dim;
+                        normalize_vector((float*)data[row], (norm_array.data() + start_idx));
 
-                    size_t id = ids.size() ? ids.at(row) : (cur_l+row);
-                    appr_alg->addPoint((float *)(norm_array.data() + start_idx), (size_t)id); });
+                        size_t id = ids.size() ? ids.at(row) : (cur_l + row);
+                        appr_alg->addPoint((float*)(norm_array.data() + start_idx), (size_t)id); });
             };
             cur_l += rows;
         }
@@ -283,46 +280,46 @@ public:
 
 
 
-	void knn(queryN* q) {
-		lsh::timer timer;
-		timer.restart();
-		int ef = appr_alg->ef_;
-		//auto& appr_alg = appr_alg;
-		auto id = 0;
-		auto res = appr_alg->searchKnn(q->queryPoint, q->k + ef);
+    void knn(queryN* q) {
+        lsh::timer timer;
+        timer.restart();
+        int ef = appr_alg->ef_;
+        //auto& appr_alg = appr_alg;
+        auto id = 0;
+        auto res = appr_alg->searchKnn(q->queryPoint, q->k + ef);
 
-		while (!res.empty()) {
-			auto top = res.top();
-			res.pop();
-			q->resHeap.emplace(top.second, top.first);
-			while (q->resHeap.size() > q->k) q->resHeap.pop();
-		}
+        while (!res.empty()) {
+            auto top = res.top();
+            res.pop();
+            q->resHeap.emplace(top.second, top.first);
+            while (q->resHeap.size() > q->k) q->resHeap.pop();
+        }
 
-		while (!q->resHeap.empty()) {
-			auto top = q->resHeap.top();
-			q->resHeap.pop();
-			q->res.emplace_back(top.id, 1.0 - top.dist);
-		}
-		std::reverse(q->res.begin(), q->res.end());
-		q->time_total = timer.elapsed();
-	}
+        while (!q->resHeap.empty()) {
+            auto top = q->resHeap.top();
+            q->resHeap.pop();
+            q->res.emplace_back(top.id, 1.0 - top.dist);
+        }
+        std::reverse(q->res.begin(), q->res.end());
+        q->time_total = timer.elapsed();
+    }
 
-	~myNADG() {
-		delete appr_alg;
-	}
+    ~myNADG() {
+        delete appr_alg;
+    }
 };
 
 using napg = hnswlib::NormAdjustedProximityGraph<float>;
 
 class myNAPG {
-private:
+    private:
     std::string index_file;
     IpSpace* ips = nullptr;
     napg* appr_alg = nullptr;
     //Preprocess* prep = nullptr;
     Data data;
     std::vector<int> hnsw_maps;//maps between hnsw internel labels and external labels
-public:
+    public:
     int N;
     int dim;
     // Number of hash functions
@@ -484,9 +481,12 @@ public:
 
             if (useNormFactor) {
                 // Add data to dataset and calculate the adjusting factors
-                for (int row = 0; row < rows; row++) {
-                    appr_alg->addData((float*)data[row], dim);
-                }
+                // for (int row = 0; row < rows; row++) {
+                //     appr_alg->addData((float*)data[row], dim);
+                // }
+                int row = 0;
+                ParallelFor(row, rows, num_threads, [&](size_t row, size_t threadId) {
+                    appr_alg->addData((float*)data[row], dim); });
 
                 // Calculate norm ranged based factors
                 appr_alg->getNormRangeBasedFactors(data.val);
