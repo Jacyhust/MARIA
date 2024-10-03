@@ -116,14 +116,11 @@ void Hash::SetHash()
 
 	std::mt19937 rng(int(std::time(0)));
 	std::normal_distribution<float> nd;
-	for (int j = 0; j < S; j++)
-	{
-		for (int i = 0; i < dim; i++)
-		{
+	for (int j = 0; j < S; j++) {
+		for (int i = 0; i < dim; i++) {
 			hashpar.rndAs1[j][i] = (nd(rng));
 		}
-		for (int i = 0; i < 1; i++)
-		{
+		for (int i = 0; i < 1; i++) {
 			hashpar.rndAs2[j][i] = (nd(rng));
 		}
 	}
@@ -135,8 +132,8 @@ void Hash::GetHash(Preprocess& prep)
 	std::mt19937 rng(int(std::time(0)));
 	std::uniform_real_distribution<float> ur(-1, 1);
 	int count = 0;
-	for (int j = 0; j < N; j++)
-	{
+#pragma omp parallel for schedule(dynamic,512)
+	for (int j = 0; j < N; j++) {
 		//assert(parti.MaxLen[parti.chunks[j]] >= prep.SquareLen[j]);
 		dataExpend[j] = sqrt(parti.MaxLen[parti.chunks[j]] - prep.norms[j] * prep.norms[j]);
 		if (ur(rng) > 0) {
@@ -148,6 +145,7 @@ void Hash::GetHash(Preprocess& prep)
 	std::cout << "RXT ratio: " << (double)count / N << std::endl;
 
 	hashval = new float* [N];
+#pragma omp parallel for schedule(dynamic,512)
 	for (int j = 0; j < N; j++) {
 		hashval[j] = new float[S];
 		for (int i = 0; i < S; i++) {
@@ -172,6 +170,7 @@ void Hash::GetTables(Preprocess& prep)
 	}
 
 	for (j = 0; j < L; j++) {
+#pragma omp parallel for schedule(dynamic,512)
 		for (i = 0; i < N; i++) {
 			int start = j * K;
 			int key = 0;
