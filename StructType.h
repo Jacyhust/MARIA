@@ -7,12 +7,12 @@ struct Data
 	// Number of data
 	int N;
 	// Data matrix
-	float** val;
+	float** val = nullptr;
 
 	// No safety checking!!!
 	float*& operator[](int i) { return val[i]; }
 
-	float* base=nullptr;
+	float* base = nullptr;
 };
 
 struct Ben

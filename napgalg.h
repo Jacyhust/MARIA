@@ -316,14 +316,6 @@ namespace hnswlib
                     for (int n = 0; n < num_data; n++) {
                         // get inner product
                         float inner_product = cal_inner_product(query, dataset[n], dim_);
-                        //    0;
-                        //for (unsigned d = 0; d < dim_; d += 4) {
-                        //  // Used faster for loop to accelerate this method
-                        //    inner_product += query[d] * dataset[n][d] +
-                        //        query[d + 1] * dataset[n][d + 1] +
-                        //        query[d + 2] * dataset[n][d + 2] +
-                        //        query[d + 3] * dataset[n][d + 3];
-                        //}
                         nearest_neighbours.emplace(inner_product, n);
                     }
 

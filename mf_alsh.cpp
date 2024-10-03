@@ -11,6 +11,22 @@
 #include <sstream>
 #include <numeric>
 #include <iomanip>
+#include <mutex>
+#include "patch_ubuntu.h"
+#include <functional>
+
+#if (__cplusplus >= 201703L) || (defined(_MSVC_LANG) && (_MSVC_LANG >= 201703L) && (_MSC_VER >= 1913))
+#include <shared_mutex>
+typedef std::shared_mutex mp_mutex;
+//In C++17 format, read_lock can be shared
+typedef std::shared_lock<std::shared_mutex> read_lock;
+typedef std::unique_lock<std::shared_mutex> write_lock;
+#else
+typedef std::mutex mp_mutex;
+//Not in C++17 format, read_lock is the same as write_lock and can not be shared
+typedef std::unique_lock<std::mutex> read_lock;
+typedef std::unique_lock<std::mutex> write_lock;
+#endif // _HAS_CXX17
 
 #define MAXSIZE 20480
 #define pi 3.141592653
@@ -33,7 +49,13 @@ Hash::Hash(Preprocess& prep_, Parameter& param_,
 
 	std::ifstream in(file, std::ios::binary);
 	if (!in.good()) {
+		float mem = (float)getCurrentRSS() / (1024 * 1024);
 		buildIndex(prep_);
+		float memf = (float)getCurrentRSS() / (1024 * 1024);
+		std::cout << "Build time:" << indexing_time << "  seconds.\n";
+		FILE* fp = nullptr;
+		fopen_s(&fp, "./indexes/mf_info.txt", "a");
+		if (fp) fprintf(fp, "%s\nmemory=%f MB, IndexingTime=%f s.\n\n", index_file.c_str(), memf - mem, indexing_time);
 		saveIndex();
 	}
 	else {
@@ -42,12 +64,9 @@ Hash::Hash(Preprocess& prep_, Parameter& param_,
 		loadIndex();
 		float memf = (float)getCurrentRSS() / (1024 * 1024);
 		std::cout << "Actual memory usage: " << memf - mem << " Mb \n";
+
 	}
-
-
 }
-
-
 
 void Hash::load_funtable(const std::string& file)
 {
@@ -157,30 +176,37 @@ void Hash::GetHash(Preprocess& prep)
 
 void Hash::GetTables(Preprocess& prep)
 {
-	int i, j, k;
+	//int i, j, k;
 
 	int num_bucket = 1 << K;
 
 	myIndexes = new std::vector<int> **[parti.numChunks];
-	for (j = 0; j < parti.numChunks; ++j) {
+	for (int j = 0; j < parti.numChunks; ++j) {
 		myIndexes[j] = new std::vector<int> *[L];
-		for (i = 0; i < L; ++i) {
+		for (int i = 0; i < L; ++i) {
 			myIndexes[j][i] = new std::vector<int>[num_bucket];
 		}
 	}
+	//std::vector<mp_mutex> lockkk(L);
+	//std::vector<std::vector<mp_mutex>> locks(N, std::vector<mp_mutex>{}});
 
-	for (j = 0; j < L; j++) {
-#pragma omp parallel for schedule(dynamic,512)
-		for (i = 0; i < N; i++) {
+	std::vector<std::vector<mp_mutex>> locks(parti.numChunks);
+	for (auto& lock : locks) lock = std::vector<mp_mutex>(L);
+
+#pragma omp parallel for schedule(dynamic,1)
+	for (int j = 0; j < L; j++) {
+		for (int i = 0; i < N; i++) {
 			int start = j * K;
 			int key = 0;
-			for (k = 0; k < K; k++) {
+			for (int k = 0; k < K; k++) {
 				key = key << 1;
 				if (this->hashval[i][start + k] > 0) {
 					++key;
 				}
 			}
+			write_lock lock(locks[parti.chunks[i]][j]);
 			myIndexes[(size_t)parti.chunks[i]][j][key].push_back(i);
+			//lock.unlock();
 		}
 	}
 }

@@ -262,7 +262,9 @@ void Preprocess::ben_create()
 
 Preprocess::~Preprocess()
 {
-	clear_2d_array(data.val, data.N);
+	//if (data.val) clear_2d_array(data.val, data.N);
+	delete[] data.val;
+	if (data.base) delete[] data.base;
 	clear_2d_array(benchmark.indice, benchmark.N);
 	clear_2d_array(benchmark.innerproduct, benchmark.N);
 	delete[] norms;

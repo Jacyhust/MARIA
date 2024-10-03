@@ -28,7 +28,7 @@ namespace mf_alsh
 		Partition parti;
 		HashParam hashpar;
 		std::vector<int>*** myIndexes;
-
+		float indexing_time = 0.0f;
 		float tmin;
 		float tstep;
 		float smin;
@@ -48,7 +48,7 @@ namespace mf_alsh
 
 		void buildIndex(Preprocess& prep_) {
 			std::cout << std::endl << "START HASHING..." << std::endl << std::endl;
-			lsh::timer timer;
+			lsh::timer timer, timer_total;
 
 			std::cout << "SETTING HASH PARAMETER..." << std::endl;
 			timer.restart();
@@ -65,6 +65,8 @@ namespace mf_alsh
 			timer.restart();
 			GetTables(prep_);
 			std::cout << "BUILDING TIME: " << timer.elapsed() << "s." << std::endl << std::endl;
+
+			indexing_time = timer_total.elapsed();
 		}
 
 		void saveIndex() {

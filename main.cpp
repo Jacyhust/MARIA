@@ -64,7 +64,7 @@ int main(int argc, char const* argv[])
 	Partition parti(c, prep);
 	std::cout << "Partition time: " << timer.elapsed() << " s.\n" << std::endl;
 
-	mf_alsh::Hash mf(prep, param, index_fold + (argvStr[2]) + "_mf", parti, data_fold2 + "MyfunctionXTheta.data");
+	//mf_alsh::Hash mf(prep, param, index_fold + (argvStr[2]) + "_mf", parti, data_fold2 + "MyfunctionXTheta.data");
 
 	//solidAnglePartition sap(prep, param, index_fold + (argvStr[2]), parti, data_fold2 + "MyfunctionXTheta.data");
 	//myHNSW hnsw(prep, param, index_fold + (argvStr[2]) + "_ipnsw", parti, data_fold2 + "MyfunctionXTheta.data");
@@ -77,8 +77,8 @@ int main(int argc, char const* argv[])
 	//maria_hcnng maria_hc(prep, param, index_fold+(argvStr[2]), parti, data_fold2 + "MyfunctionXTheta.data");
 	//res.push_back(Alg0_maria(maria_hc, c, 100, k, L, K, prep));
 
-	//myNADG nadg(prep.data, 24, 500, 1000);
-	//myNAPG napg(prep.data, 24, 500, 1000);
+	myNADG nadg(prep.data, 24, 500, 1000);
+	myNAPG napg(prep.data, 24, 500, 1000);
 	// mariaV3 maria3(prep, param, index_fold.append(argvStr[2]), parti, data_fold2 + "MyfunctionXTheta.data");
 	//hcnngLite::hcnng<calInnerProductReverse>(dataset, prep.data, data_fold2 + argvStr[2] + "_hcnng", "index_result.txt", minsize_cl, num_cl, max_mst_degree, 0);
 	//hcnngLite::hcnng<calInnerProductReverse> hcnng(dataset, prep.data, data_fold2 + argvStr[2] + "_hcnng", "index_result.txt", 
@@ -91,13 +91,13 @@ int main(int argc, char const* argv[])
 	//res.push_back(Alg0_maria(hcnng, c, 100, k, L, K, prep));
 	//res.push_back(Alg0_maria(maria, c, 100, k, L, K, prep));
 
-	//res.push_back(Alg0_maria(nadg, c, 100, k, L, K, prep));
-	//res.push_back(Alg0_maria(napg, c, 100, k, L, K, prep));
+	res.push_back(Alg0_maria(nadg, c, 100, k, L, K, prep));
+	res.push_back(Alg0_maria(napg, c, 100, k, L, K, prep));
 	//res.push_back(Alg0_maria(mariaV4, c, 100, k, L, K, prep));
 	//res.push_back(Alg0_maria(mariaV5, c, 100, k, L, K, prep));
 	//res.push_back(Alg0_maria(hnsw, c, 100, k, L, K, prep));
 
-	res.push_back(Alg0_mfalsh(mf, c, m, k, L, K, prep));
+	//res.push_back(Alg0_mfalsh(mf, c, m, k, L, K, prep));
 
 	//res.push_back(Alg0_maria(hnsw, c, 100, k, L, K, prep));
 	std::vector<int> ms = { 0,100,200,400,800,1200,1600,3200,6400 };
