@@ -1,6 +1,6 @@
 #include "mf_alsh.h"
 #include "Preprocess.h"
-#include "basis.hpp"
+#include "basis.h"
 #include <fstream>
 #include <assert.h>
 #include <random>
@@ -11,6 +11,22 @@
 #include <sstream>
 #include <numeric>
 #include <iomanip>
+#include <mutex>
+#include "patch_ubuntu.h"
+#include <functional>
+
+#if (__cplusplus >= 201703L) || (defined(_MSVC_LANG) && (_MSVC_LANG >= 201703L) && (_MSC_VER >= 1913))
+#include <shared_mutex>
+typedef std::shared_mutex mp_mutex;
+//In C++17 format, read_lock can be shared
+typedef std::shared_lock<std::shared_mutex> read_lock;
+typedef std::unique_lock<std::shared_mutex> write_lock;
+#else
+typedef std::mutex mp_mutex;
+//Not in C++17 format, read_lock is the same as write_lock and can not be shared
+typedef std::unique_lock<std::mutex> read_lock;
+typedef std::unique_lock<std::mutex> write_lock;
+#endif // _HAS_CXX17
 
 #define MAXSIZE 20480
 #define pi 3.141592653
@@ -28,29 +44,28 @@ Hash::Hash(Preprocess& prep_, Parameter& param_,
 	L = param_.L;
 	K = param_.K;
 	S = param_.S;
-
+	index_file = file;
 	load_funtable(funtable);
 
-	std::cout << std::endl << "START HASHING..." << std::endl << std::endl;
-	lsh::timer timer;
+	std::ifstream in(file, std::ios::binary);
+	if (!in.good()) {
+		float mem = (float)getCurrentRSS() / (1024 * 1024);
+		buildIndex(prep_);
+		float memf = (float)getCurrentRSS() / (1024 * 1024);
+		std::cout << "Build time:" << indexing_time << "  seconds.\n";
+		FILE* fp = nullptr;
+		fopen_s(&fp, "./indexes/mf_info.txt", "a");
+		if (fp) fprintf(fp, "%s\nmemory=%f MB, IndexingTime=%f s.\n\n", index_file.c_str(), memf - mem, indexing_time);
+		saveIndex();
+	}
+	else {
+		std::cout << "Loading index from " << index_file << ":\n";
+		float mem = (float)getCurrentRSS() / (1024 * 1024);
+		loadIndex();
+		float memf = (float)getCurrentRSS() / (1024 * 1024);
+		std::cout << "Actual memory usage: " << memf - mem << " Mb \n";
 
-	std::cout << "SETTING HASH PARAMETER..." << std::endl;
-	timer.restart();
-	SetHash();
-	std::cout << "SETTING TIME: " << timer.elapsed() << "s." << std::endl << std::endl;
-
-	std::cout << "COMPUTING HASH..." << std::endl;
-	timer.restart();
-	GetHash(prep_);
-	std::cout << "COMPUTING TIME: " << timer.elapsed() << "s." << std::endl << std::endl;
-
-	std::cout << "BUILDING INDEX..." << std::endl;
-	std::cout << "THERE ARE " << L << " " << K << "-D HASH TABLES." << std::endl;
-	timer.restart();
-	GetTables(prep_);
-	std::cout << "BUILDING TIME: " << timer.elapsed() << "s." << std::endl << std::endl;
-
-
+	}
 }
 
 void Hash::load_funtable(const std::string& file)
@@ -111,23 +126,20 @@ void Hash::SetHash()
 {
 	hashpar.rndAs1 = new float* [S];
 	hashpar.rndAs2 = new float* [S];
-	
 
-	for (int i = 0; i < S; i++){
+
+	for (int i = 0; i < S; i++) {
 		hashpar.rndAs1[i] = new float[dim];
 		hashpar.rndAs2[i] = new float[1];
 	}
 
 	std::mt19937 rng(int(std::time(0)));
 	std::normal_distribution<float> nd;
-	for (int j = 0; j < S; j++)
-	{
-		for (int i = 0; i < dim; i++)
-		{
+	for (int j = 0; j < S; j++) {
+		for (int i = 0; i < dim; i++) {
 			hashpar.rndAs1[j][i] = (nd(rng));
 		}
-		for (int i = 0; i < 1; i++)
-		{
+		for (int i = 0; i < 1; i++) {
 			hashpar.rndAs2[j][i] = (nd(rng));
 		}
 	}
@@ -139,19 +151,20 @@ void Hash::GetHash(Preprocess& prep)
 	std::mt19937 rng(int(std::time(0)));
 	std::uniform_real_distribution<float> ur(-1, 1);
 	int count = 0;
-	for (int j = 0; j < N; j++)
-	{
-		assert(parti.MaxLen[parti.chunks[j]] >= prep.SquareLen[j]);
-		dataExpend[j] = sqrt(parti.MaxLen[parti.chunks[j]] - prep.SquareLen[j]);
+#pragma omp parallel for schedule(dynamic,512)
+	for (int j = 0; j < N; j++) {
+		//assert(parti.MaxLen[parti.chunks[j]] >= prep.SquareLen[j]);
+		dataExpend[j] = sqrt(parti.MaxLen[parti.chunks[j]] - prep.norms[j] * prep.norms[j]);
 		if (ur(rng) > 0) {
 			dataExpend[j] *= -1;
 			++count;
 		}
-		
+
 	}
 	std::cout << "RXT ratio: " << (double)count / N << std::endl;
 
 	hashval = new float* [N];
+#pragma omp parallel for schedule(dynamic,512)
 	for (int j = 0; j < N; j++) {
 		hashval[j] = new float[S];
 		for (int i = 0; i < S; i++) {
@@ -163,29 +176,37 @@ void Hash::GetHash(Preprocess& prep)
 
 void Hash::GetTables(Preprocess& prep)
 {
-	int i, j, k;
+	//int i, j, k;
 
 	int num_bucket = 1 << K;
 
-	myIndexes = new std::vector<int> * *[parti.numChunks];
-	for (j = 0; j < parti.numChunks; ++j) {
-		myIndexes[j] = new std::vector<int> * [L];
-		for (i = 0; i < L; ++i) {
+	myIndexes = new std::vector<int> **[parti.numChunks];
+	for (int j = 0; j < parti.numChunks; ++j) {
+		myIndexes[j] = new std::vector<int> *[L];
+		for (int i = 0; i < L; ++i) {
 			myIndexes[j][i] = new std::vector<int>[num_bucket];
 		}
 	}
+	//std::vector<mp_mutex> lockkk(L);
+	//std::vector<std::vector<mp_mutex>> locks(N, std::vector<mp_mutex>{}});
 
-	for (j = 0; j < L; j++) {
-		for (i = 0; i < N; i++) {
+	std::vector<std::vector<mp_mutex>> locks(parti.numChunks);
+	for (auto& lock : locks) lock = std::vector<mp_mutex>(L);
+
+#pragma omp parallel for schedule(dynamic,1)
+	for (int j = 0; j < L; j++) {
+		for (int i = 0; i < N; i++) {
 			int start = j * K;
 			int key = 0;
-			for (k = 0; k < K; k++) {
+			for (int k = 0; k < K; k++) {
 				key = key << 1;
-				if (this->hashval[i][ start + k] > 0) {
+				if (this->hashval[i][start + k] > 0) {
 					++key;
 				}
 			}
+			write_lock lock(locks[parti.chunks[i]][j]);
 			myIndexes[(size_t)parti.chunks[i]][j][key].push_back(i);
+			//lock.unlock();
 		}
 	}
 }
@@ -234,12 +255,13 @@ Query::Query(int id, float c_, int k_, Hash& hash, Preprocess& prep, int ub_)
 
 void Query::cal_hash(Hash& hash, Preprocess& prep)
 {
-	query_point = mydata[qid];
-	norm = 0;
-	for (int i = 0; i < dim; ++i) {
-		norm += query_point[i] * query_point[i];
-	}
-	norm = sqrt(norm);
+	//query_point = mydata[qid];
+	query_point = prep.queries[qid];
+	// norm = 0;
+	// for (int i = 0; i < dim; ++i) {
+	// 	norm += query_point[i] * query_point[i];
+	// }
+	norm = sqrt(cal_inner_product(query_point, query_point, dim));
 
 	hashval = new float[hash.S];
 	for (int i = 0; i < hash.S; ++i) {
@@ -300,11 +322,11 @@ void Query::siftF(Hash& hash, Preprocess& prep)
 	inp_LB = MINFLOAT;
 	costs.resize(hash.parti.numChunks);
 
-	for (int t = hash.parti.numChunks - 1; t >= 0; t--){
-		if (sqrt(hash.parti.MaxLen[t]) * norm < inp_LB / c) break;
+	for (int t = hash.parti.numChunks - 1; t >= 0; t--) {
+		if ((hash.parti.MaxLen[t]) * norm < inp_LB / c) break;
 		if (hash.parti.nums[t] < 4 * CANDIDATES) {
 			int num_cand = hash.parti.EachParti[t].size();
-			for (int j = 0; j < num_cand; j++){
+			for (int j = 0; j < num_cand; j++) {
 				int& x = hash.parti.EachParti[t][j];
 				res_PQ[size].id = x;
 				res_PQ[size].dist = cal_inner_product(mydata[x], query_point, dim);
@@ -313,7 +335,7 @@ void Query::siftF(Hash& hash, Preprocess& prep)
 					size++;
 					std::push_heap(res_PQ, res_PQ + size);
 				}
-				else if(res_PQ[0].dist < res_PQ[size].dist){
+				else if (res_PQ[0].dist < res_PQ[size].dist) {
 					size++;
 					std::push_heap(res_PQ, res_PQ + size);
 					std::pop_heap(res_PQ, res_PQ + size);
@@ -325,7 +347,7 @@ void Query::siftF(Hash& hash, Preprocess& prep)
 			chunks = t;
 			knnF(res_PQ, hash, prep, hash.myIndexes[t], flag_, size);
 		}
-		
+
 		if (size == UB) inp_LB = res_PQ[0].dist;
 	}
 
@@ -334,7 +356,7 @@ void Query::siftF(Hash& hash, Preprocess& prep)
 	int len = size;
 	res.resize(len);
 	int rr = len - 1;
-	while (rr >= 0){
+	while (rr >= 0) {
 		res[rr] = res_PQ[0];
 		std::pop_heap(res_PQ, res_PQ + size);
 		size--;
@@ -342,7 +364,7 @@ void Query::siftF(Hash& hash, Preprocess& prep)
 	}
 
 
-	for (int i = 0; i < hash.parti.numChunks; i++){
+	for (int i = 0; i < hash.parti.numChunks; i++) {
 		cost += costs[i];
 	}
 	time_verify = timer.elapsed();
@@ -360,7 +382,7 @@ void Query::knnF(Res* res_PQ,
 
 	for (int i = 0; i < hash.L; i++) {
 		for (auto& x : table[i][keys[i]]) {
-			if (flag_[x] == false){
+			if (flag_[x] == false) {
 				res_PQ[size].id = x;
 				res_PQ[size].dist = cal_inner_product(mydata[x], query_point, dim);
 				cnt++;

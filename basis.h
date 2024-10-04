@@ -10,14 +10,15 @@
 #include <algorithm>
 #include "fastL2_ip.h"
 #include <chrono>
-
+#include <mutex>
+#include <atomic>
 namespace lsh
 {
 	class progress_display
 	{
 		public:
 		explicit progress_display(
-			int long expected_count,
+			unsigned long expected_count,
 			std::ostream& os = std::cout,
 			const std::string& s1 = "\n",
 			const std::string& s2 = "",
@@ -26,32 +27,44 @@ namespace lsh
 		{
 			restart(expected_count);
 		}
-		void restart(int long expected_count)
+		void restart(unsigned long expected_count)
 		{
-			_count = _next_tic_count = _tic = 0;
+			//_count = _next_tic_count = _tic = 0;
 			_expected_count = expected_count;
 			m_os << m_s1 << "0%   10   20   30   40   50   60   70   80   90   100%\n"
 				<< m_s2 << "|----|----|----|----|----|----|----|----|----|----|"
 				<< std::endl
 				<< m_s3;
-			if (!_expected_count) {
+			if (!_expected_count)
+			{
 				_expected_count = 1;
 			}
 		}
-		int long operator += (int long increment) {
+		unsigned long operator += (unsigned long increment)
+		{
+			std::unique_lock<std::mutex> lock(mtx);
 			if ((_count += increment) >= _next_tic_count)
 			{
 				display_tic();
 			}
 			return _count;
 		}
-		int long  operator ++ () {
+		unsigned long  operator ++ ()
+		{
 			return operator += (1);
 		}
-		int long count() const {
+
+		//unsigned long  operator + (int x)
+		//{
+		//	return operator += (x);
+		//}
+
+		unsigned long count() const
+		{
 			return _count;
 		}
-		int long expected_count() const {
+		unsigned long expected_count() const
+		{
 			return _expected_count;
 		}
 		private:
@@ -59,16 +72,17 @@ namespace lsh
 		const std::string m_s1;
 		const std::string m_s2;
 		const std::string m_s3;
-		int long _count, _expected_count, _next_tic_count;
-		int _tic;
+		std::mutex mtx;
+		std::atomic<size_t> _count{ 0 }, _expected_count{ 0 }, _next_tic_count{ 0 };
+		std::atomic<unsigned> _tic{ 0 };
 		void display_tic()
 		{
-			int tics_needed = int((double(_count) / _expected_count) * 50.0);
+			unsigned tics_needed = unsigned((double(_count) / _expected_count) * 50.0);
 			do
 			{
 				m_os << '*' << std::flush;
 			} while (++_tic < tics_needed);
-			_next_tic_count = int((_tic / 50.0) * _expected_count);
+			_next_tic_count = unsigned((_tic / 50.0) * _expected_count);
 			if (_count == _expected_count)
 			{
 				if (_tic < 51) m_os << '*';
@@ -184,7 +198,37 @@ inline float calInnerProductReverse(float* v1, float* v2, int dim) {
 // #include <fstream>
 // #include <iomanip>
 // #include <cstdio>
+
+#if defined(_WIN32)
+#include <windows.h>
+#include <psapi.h>
+#define NOMINMAX
+
+#undef max
+
+#undef min
+#elif defined(__unix__) || defined(__unix) || defined(unix) || (defined(__APPLE__) && defined(__MACH__))
+
 #include <unistd.h>
+#include <sys/resource.h>
+
+
+#if defined(__APPLE__) && defined(__MACH__)
+#include <mach/mach.h>
+
+#elif (defined(_AIX) || defined(__TOS__AIX__)) || (defined(__sun__) || defined(__sun) || defined(sun) && (defined(__SVR4) || defined(__svr4__)))
+#include <fcntl.h>
+#include <procfs.h>
+
+#elif defined(__linux__) || defined(__linux) || defined(linux) || defined(__gnu_linux__)
+
+#endif
+
+#else
+#error "Cannot define getPeakRSS( ) or getCurrentRSS( ) for an unknown OS."
+#endif
+
+
 /**
 * Returns the current resident set size (physical memory use) measured
 * in bytes, or zero if the value cannot be determined on this OS.

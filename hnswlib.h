@@ -41,51 +41,51 @@ namespace hnswlib {
 
     template <typename T>
     class pairGreater {
-    public:
+        public:
         bool operator()(const T& p1, const T& p2) {
             return p1.first > p2.first;
         }
     };
 
     template<typename T>
-    static void writeBinaryPOD(std::ostream &out, const T &podRef) {
-        out.write((char *) &podRef, sizeof(T));
+    static void writeBinaryPOD(std::ostream& out, const T& podRef) {
+        out.write((char*)&podRef, sizeof(T));
     }
 
     template<typename T>
-    static void readBinaryPOD(std::istream &in, T &podRef) {
-        in.read((char *) &podRef, sizeof(T));
+    static void readBinaryPOD(std::istream& in, T& podRef) {
+        in.read((char*)&podRef, sizeof(T));
     }
 
     template<typename MTYPE>
-    using DISTFUNC = MTYPE(*)(const void *, const void *, const void *);
+    using DISTFUNC = MTYPE(*)(const void*, const void*, const void*);
 
     //template<typename MTYPE>
     //using DISTFUNC = MTYPE(*)(float*, float*, int);
 
     template<typename MTYPE>
     class SpaceInterface {
-    public:
+        public:
         //virtual void search(void *);
         virtual size_t get_data_size() = 0;
 
         virtual DISTFUNC<MTYPE> get_dist_func() = 0;
 
-        virtual void *get_dist_func_param() = 0;
+        virtual void* get_dist_func_param() = 0;
 
         virtual ~SpaceInterface() {}
     };
 
     template<typename dist_t>
     class AlgorithmInterface {
-    public:
+        public:
         //virtual void addPoint(const void *datapoint, labeltype label)=0;
         //virtual std::priority_queue<std::pair<dist_t, labeltype >> searchKnn(const void *, size_t) const = 0;
         template <typename Comp>
         std::vector<std::pair<dist_t, labeltype>> searchKnn(const void*, size_t, Comp) {
         }
-        virtual void saveIndex(const std::string &location)=0;
-        virtual ~AlgorithmInterface(){
+        virtual void saveIndex(const std::string& location) = 0;
+        virtual ~AlgorithmInterface() {
         }
     };
 
@@ -121,19 +121,19 @@ class IpSpace : public hnswlib::SpaceInterface<float> {
     DISTFUNC<float> fstdistfunc_ = cal_inner_product_hnsw;
     size_t data_size_;
     size_t dim_;
-public:
+    public:
     IpSpace(size_t dim) {
         fstdistfunc_ = cal_inner_product_hnsw;
-//#if defined(USE_SSE) || defined(USE_AVX)
-//        if (dim % 16 == 0)
-//            fstdistfunc_ = L2SqrSIMD16Ext;
-//        else if (dim % 4 == 0)
-//            fstdistfunc_ = L2SqrSIMD4Ext;
-//        else if (dim > 16)
-//            fstdistfunc_ = L2SqrSIMD16ExtResiduals;
-//        else if (dim > 4)
-//            fstdistfunc_ = L2SqrSIMD4ExtResiduals;
-//#endif
+        //#if defined(USE_SSE) || defined(USE_AVX)
+        //        if (dim % 16 == 0)
+        //            fstdistfunc_ = L2SqrSIMD16Ext;
+        //        else if (dim % 4 == 0)
+        //            fstdistfunc_ = L2SqrSIMD4Ext;
+        //        else if (dim > 16)
+        //            fstdistfunc_ = L2SqrSIMD16ExtResiduals;
+        //        else if (dim > 4)
+        //            fstdistfunc_ = L2SqrSIMD4ExtResiduals;
+        //#endif
         dim_ = dim;
         data_size_ = dim * sizeof(float);
     }
@@ -158,19 +158,19 @@ class L2Space : public hnswlib::SpaceInterface<float> {
     DISTFUNC<float> fstdistfunc_;
     size_t data_size_;
     size_t dim_;
-public:
+    public:
     L2Space(size_t dim) {
         fstdistfunc_ = cal_L2sqr_hnsw;
-//#if defined(USE_SSE) || defined(USE_AVX)
-//        if (dim % 16 == 0)
-//            fstdistfunc_ = L2SqrSIMD16Ext;
-//        else if (dim % 4 == 0)
-//            fstdistfunc_ = L2SqrSIMD4Ext;
-//        else if (dim > 16)
-//            fstdistfunc_ = L2SqrSIMD16ExtResiduals;
-//        else if (dim > 4)
-//            fstdistfunc_ = L2SqrSIMD4ExtResiduals;
-//#endif
+        //#if defined(USE_SSE) || defined(USE_AVX)
+        //        if (dim % 16 == 0)
+        //            fstdistfunc_ = L2SqrSIMD16Ext;
+        //        else if (dim % 4 == 0)
+        //            fstdistfunc_ = L2SqrSIMD4Ext;
+        //        else if (dim > 16)
+        //            fstdistfunc_ = L2SqrSIMD16ExtResiduals;
+        //        else if (dim > 4)
+        //            fstdistfunc_ = L2SqrSIMD4ExtResiduals;
+        //#endif
         dim_ = dim;
         data_size_ = dim * sizeof(float);
     }

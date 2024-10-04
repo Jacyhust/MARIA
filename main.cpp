@@ -16,12 +16,14 @@
 #include <chrono>
 
 #include "Preprocess.h"
-//#include "mf_alsh.h"
+#include "mf_alsh.h"
 //#include "basis.h"
 #include "alg.h"
 #include "maria.h"
 #include "bf.h"
 #include "normAdjustedDG.h"
+#include "ipnsw-plus.h"
+
 extern std::string data_fold, index_fold;
 extern std::string data_fold1, data_fold2;
 std::unique_lock<std::mutex>* glock = nullptr;
@@ -33,7 +35,7 @@ std::unique_lock<std::mutex>* glock = nullptr;
 
 int main(int argc, char const* argv[])
 {
-	std::string dataset = "mnist";
+	std::string dataset = "audio2";
 	if (argc > 1) {
 		dataset = argv[1];
 	}
@@ -49,7 +51,7 @@ int main(int argc, char const* argv[])
 	std::cout << "Using FARGO for " << argvStr[1] << std::endl;
 	Preprocess prep(data_fold1 + (argvStr[1]), data_fold2 + (argvStr[3]));
 	std::vector<resOutput> res;
-	m = 0;
+	m = 1000;
 	L = 5;
 	K = 12;
 	c = 0.8;
@@ -62,10 +64,13 @@ int main(int argc, char const* argv[])
 
 	lsh::timer timer;
 	Partition parti(c, prep);
-	std::cout << "Partition time: " << timer.elapsed() << " s." << std::endl;
+	std::cout << "Partition time: " << timer.elapsed() << " s.\n" << std::endl;
+
+	//mf_alsh::Hash mf(prep, param, index_fold + (argvStr[2]) + "_mf", parti, data_fold2 + "MyfunctionXTheta.data");
 
 	//solidAnglePartition sap(prep, param, index_fold + (argvStr[2]), parti, data_fold2 + "MyfunctionXTheta.data");
-	myHNSW hnsw(prep, param, index_fold + (argvStr[2]) + "_ipnsw", parti, data_fold2 + "MyfunctionXTheta.data");
+	//myHNSW hnsw(prep, param, index_fold + (argvStr[2]) + "_ipnsw", parti, data_fold2 + "MyfunctionXTheta.data");
+
 	//hnsw.setEf(500);
 	// mariaV2 maria2(prep, param, index_fold.append(argvStr[2]), parti, data_fold2 + "MyfunctionXTheta.data");
 	//mariaV4 mariaV4(prep, param, index_fold + (argvStr[2]), parti, data_fold2 + "MyfunctionXTheta.data");
@@ -93,7 +98,21 @@ int main(int argc, char const* argv[])
 	//res.push_back(Alg0_maria(napg, c, 100, k, L, K, prep));
 	//res.push_back(Alg0_maria(mariaV4, c, 100, k, L, K, prep));
 	//res.push_back(Alg0_maria(mariaV5, c, 100, k, L, K, prep));
+	//res.push_back(Alg0_maria(hnsw, c, 100, k, L, K, prep));
+
+	//res.push_back(Alg0_mfalsh(mf, c, m, k, L, K, prep));
+
+	//res.push_back(Alg0_maria(hnsw, c, 100, k, L, K, prep));
+
+	myNAPG napg(prep.data, 24, 80, 1000, index_fold + (argvStr[2]) + "_napg");
+	res.push_back(Alg0_maria(napg, c, 100, k, L, K, prep));
+
+	myHNSW hnsw(prep, param, index_fold + (argvStr[2]) + "_ipnsw", parti, data_fold2 + "MyfunctionXTheta.data");
 	res.push_back(Alg0_maria(hnsw, c, 100, k, L, K, prep));
+
+	ipNSW_plus plus(prep, param, index_fold + (argvStr[2]) + "_plus");
+	res.push_back(Alg0_maria(plus, c, 100, k, L, K, prep));
+
 	std::vector<int> ms = { 0,100,200,400,800,1200,1600,3200,6400 };
 	saveAndShow(c, k, dataset, res);
 

@@ -105,7 +105,7 @@ class myNADG {
 
     bool index_inited;
     bool ep_added;
-    bool normalize;
+    bool normalize = 0;
     int num_threads_default;
     hnswlib::labeltype cur_l;
     IpSpace* l2space = nullptr;
@@ -167,8 +167,8 @@ class myNADG {
         }
         cur_l = 0;
         const size_t seed = 100;
-        appr_alg = new nadg(l2space, maxElements, M, efConstruction, seed, dim, useNormFactor);
-
+        //appr_alg = new nadg(l2space, maxElements, M, efConstruction, seed, dim, useNormFactor);
+        appr_alg = new nadg(l2space, maxElements, M, efConstruction, seed, dim, 0);
         index_inited = true;
         ep_added = false;
         appr_alg->ef_ = default_ef;
@@ -258,9 +258,12 @@ class myNADG {
 
             if (normalize == false)
             {
+                lsh::progress_display pd(rows);
                 ParallelFor(start, rows, num_threads, [&](size_t row, size_t threadId) {
                     size_t id = ids.size() ? ids.at(row) : (cur_l + row);
-                    appr_alg->addPoint((float*)data[row], (size_t)id); });
+                    appr_alg->addPoint((float*)data[row], (size_t)id);
+                    ++pd;
+                    });
             }
             else
             {
@@ -328,7 +331,7 @@ class myNAPG {
     int L;
     // Dimension of the hash table
     int K;
-
+    float indexing_time = 0;
     std::string space_name;
     //size_t dim;
     //size_t seed;
@@ -337,7 +340,7 @@ class myNAPG {
 
     bool index_inited;
     bool ep_added;
-    bool normalize;
+    bool normalize = 0;
     int num_threads_default;
     hnswlib::labeltype cur_l;
     IpSpace* l2space = nullptr;
@@ -356,7 +359,7 @@ class myNAPG {
     // 	buildIndex();
     // }
 
-    myNAPG(Data& data_, int M, int efC, int ef, bool norm_adjusted_factor = true) {
+    myNAPG(Data& data_, int M, int efC, int ef, const std::string& file, bool norm_adjusted_factor = true) {
         N = data_.N;
         dim = data_.dim;
         //L = param_.L;
@@ -366,7 +369,7 @@ class myNAPG {
         data = data_;
         //GetHash();`
         //buildIndex();
-
+        index_file = file;
         //
         l2space = new IpSpace(dim);
         appr_alg = nullptr;
@@ -374,17 +377,43 @@ class myNAPG {
         index_inited = false;
         num_threads_default = std::thread::hardware_concurrency();
 
-        default_ef = 10;
+        default_ef = ef;
         useNormFactor = norm_adjusted_factor;
 
         //
 
         lsh::timer timer;
+        bool isbuilt = 1;
+        if (!(isbuilt && exists_test(index_file))) {
+            init_new_index(N, M, efC);
+            addItems();
+            saveIndex(index_file);
+            indexing_time = timer.elapsed();
+            std::cout << "Actual memory usage: " << getCurrentRSS() / (1024 * 1024) << " Mb \n";
+            std::cout << "DAPG Build time:" << indexing_time << "  seconds.\n";
+            FILE* fp = nullptr;
+            fopen_s(&fp, "./indexes/ipnsw_plus_info.txt", "a");
+            if (fp) fprintf(fp, "%s\nmemory=%f MB, IndexingTime=%f s.\n\n", index_file.c_str(), (float)getCurrentRSS() / (1024 * 1024), indexing_time);
+        }
+        else {
 
-        init_new_index(N, M, efC);
-        addItems();
+            std::cout << "Loading index from " << index_file << ":\n";
+            float mem = (float)getCurrentRSS() / (1024 * 1024);
+            loadIndex(index_file, N);
+            appr_alg->ef_ = default_ef;
+            float memf = (float)getCurrentRSS() / (1024 * 1024);
+            std::cout << "Actual memory usage: " << memf - mem << " Mb \n";
+        }
 
-        std::cout << "DAPG2 CONSTRUCTING TIME: " << timer.elapsed() << "s." << std::endl << std::endl;
+
+
+        //std::cout << "DAPG2 CONSTRUCTING TIME: " << timer.elapsed() << "s." << std::endl << std::endl;
+    }
+
+    inline bool exists_test(const std::string& name) {
+        //return false;
+        std::ifstream f(name.c_str());
+        return f.good();
     }
 
     void setEf(size_t ef) {
@@ -403,8 +432,8 @@ class myNAPG {
         }
         cur_l = 0;
         const size_t seed = 100;
-        appr_alg = new napg(l2space, maxElements, M, efConstruction, seed, dim, useNormFactor);
-
+        //appr_alg = new napg(l2space, maxElements, M, efConstruction, seed, dim, useNormFactor);
+        appr_alg = new napg(l2space, maxElements, M, efConstruction, seed, dim, 1);
         index_inited = true;
         ep_added = false;
         appr_alg->ef_ = default_ef;
@@ -486,7 +515,9 @@ class myNAPG {
                 // }
                 int row = 0;
                 ParallelFor(row, rows, num_threads, [&](size_t row, size_t threadId) {
-                    appr_alg->addData((float*)data[row], dim); });
+                    //appr_alg->addData((float*)data[row], dim);
+                    appr_alg->addData((float*)data[row], row);
+                    });
 
                 // Calculate norm ranged based factors
                 appr_alg->getNormRangeBasedFactors(data.val);
@@ -494,9 +525,12 @@ class myNAPG {
 
             if (normalize == false)
             {
+                lsh::progress_display pd(rows - 1);
                 ParallelFor(start, rows, num_threads, [&](size_t row, size_t threadId) {
                     size_t id = ids.size() ? ids.at(row) : (cur_l + row);
-                    appr_alg->addPoint((float*)data[row], (size_t)id); });
+                    appr_alg->addPoint((float*)data[row], (size_t)id);
+                    ++pd;
+                    });
             }
             else
             {

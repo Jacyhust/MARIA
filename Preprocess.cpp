@@ -15,7 +15,7 @@
 #define NUM_COURS 160
 #define E 2.718281746
 #define PI 3.1415926
-#define MAXSIZE 409600
+#define MAXSIZE 40960
 
 #define min(a,b)            (((a) < (b)) ? (a) : (b))
 
@@ -262,7 +262,9 @@ void Preprocess::ben_create()
 
 Preprocess::~Preprocess()
 {
-	clear_2d_array(data.val, data.N);
+	//if (data.val) clear_2d_array(data.val, data.N);
+	delete[] data.val;
+	if (data.base) delete[] data.base;
 	clear_2d_array(benchmark.indice, benchmark.N);
 	clear_2d_array(benchmark.innerproduct, benchmark.N);
 	delete[] norms;
@@ -276,7 +278,7 @@ Partition::Partition(float c_, float c0_, Preprocess& prep)
 
 Partition::Partition(float c_, Preprocess& prep)
 {
-	ratio = 0.95;
+	ratio = 0.975;
 	float c0_ = 1.5f;
 
 	make_chunks_fargo(prep);

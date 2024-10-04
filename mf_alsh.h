@@ -6,15 +6,15 @@
 #include <vector>
 #include <queue>
 #include <cfloat>
-
+#include <fstream>
 namespace mf_alsh
 {
 	class Hash
 	{
-	private:
+		private:
 		std::string index_file;
-		
-	public:
+
+		public:
 		int N;
 		int dim;
 		// Number of hash functions
@@ -28,7 +28,7 @@ namespace mf_alsh
 		Partition parti;
 		HashParam hashpar;
 		std::vector<int>*** myIndexes;
-
+		float indexing_time = 0.0f;
 		float tmin;
 		float tstep;
 		float smin;
@@ -38,13 +38,119 @@ namespace mf_alsh
 		float** phi;
 
 		void load_funtable(const std::string& file);
-	public:
+		public:
 		Hash(Preprocess& prep_, Parameter& param_, const std::string& file, Partition& part_, const std::string& funtable);
 		void SetHash();
 		void GetHash(Preprocess& prep);
 		void GetTables(Preprocess& prep);
 		bool IsBuilt(const std::string& file);
 		~Hash();
+
+		void buildIndex(Preprocess& prep_) {
+			std::cout << std::endl << "START HASHING..." << std::endl << std::endl;
+			lsh::timer timer, timer_total;
+
+			std::cout << "SETTING HASH PARAMETER..." << std::endl;
+			timer.restart();
+			SetHash();
+			std::cout << "SETTING TIME: " << timer.elapsed() << "s." << std::endl << std::endl;
+
+			std::cout << "COMPUTING HASH..." << std::endl;
+			timer.restart();
+			GetHash(prep_);
+			std::cout << "COMPUTING TIME: " << timer.elapsed() << "s." << std::endl << std::endl;
+
+			std::cout << "BUILDING INDEX..." << std::endl;
+			std::cout << "THERE ARE " << L << " " << K << "-D HASH TABLES." << std::endl;
+			timer.restart();
+			GetTables(prep_);
+			std::cout << "BUILDING TIME: " << timer.elapsed() << "s." << std::endl << std::endl;
+
+			indexing_time = timer_total.elapsed();
+		}
+
+		void saveIndex() {
+
+			std::string file = index_file;
+			std::ofstream out(file, std::ios::binary);
+
+			//save hashpar
+			for (int j = 0; j < S; j++) {
+				out.write((char*)(hashpar.rndAs1[j]), sizeof(float) * dim);
+				out.write((char*)(hashpar.rndAs2[j]), sizeof(float) * 1);
+			}
+
+			//save hashvals
+			for (int i = 0;i < N;++i) {
+				out.write((char*)(hashval[i]), sizeof(float) * S);
+			}
+
+			//save hash tables
+			for (int j = 0; j < parti.numChunks; ++j) {
+				for (int i = 0; i < L; ++i) {
+					for (int l = 0; l < (1 << K); ++l) {
+						auto& arr = myIndexes[j][i][l];
+						int len = arr.size();
+						out.write((char*)(&len), sizeof(int));
+						if (len) out.write((char*)(arr.data()), sizeof(float) * arr.size());
+					}
+				}
+			}
+		}
+
+		void loadIndex() {
+
+			std::string file = index_file;
+			std::ifstream in(file, std::ios::binary);
+			if (!in.good()) {
+				printf("Fail to open the file: %s\n", file.c_str());
+				exit(-1);
+			}
+
+			//load hashpar
+			hashpar.rndAs1 = new float* [S];
+			hashpar.rndAs2 = new float* [S];
+
+			for (int j = 0; j < S; j++) {
+				hashpar.rndAs1[j] = new float[dim];
+				hashpar.rndAs2[j] = new float[1];
+				in.read((char*)(hashpar.rndAs1[j]), sizeof(float) * dim);
+				in.read((char*)(hashpar.rndAs2[j]), sizeof(float) * 1);
+			}
+
+			//load hashvals
+			hashval = new float* [N];
+			for (int i = 0;i < N;++i) {
+				hashval[i] = new float[S];
+				in.read((char*)(hashval[i]), sizeof(float) * S);
+			}
+
+			//load hash tables
+			int num_bucket = 1 << K;
+
+			myIndexes = new std::vector<int> **[parti.numChunks];
+			int i, j, k;
+			for (j = 0; j < parti.numChunks; ++j) {
+				myIndexes[j] = new std::vector<int> *[L];
+				for (i = 0; i < L; ++i) {
+					myIndexes[j][i] = new std::vector<int>[num_bucket];
+				}
+			}
+
+			for (int j = 0; j < parti.numChunks; ++j) {
+				for (int i = 0; i < L; ++i) {
+					for (int l = 0; l < (1 << K); ++l) {
+						auto& arr = myIndexes[j][i][l];
+						int len = 0;
+						in.read((char*)(&len), sizeof(int));
+						if (len) {
+							arr.resize(len);
+							in.read((char*)(arr.data()), sizeof(float) * arr.size());
+						}
+					}
+				}
+			}
+		}
 	};
 
 	struct Res//the result of knns
@@ -52,7 +158,7 @@ namespace mf_alsh
 		float dist;
 		int id;
 		Res() = default;
-		Res(int id_, float inp_):id(id_), dist(inp_) {}
+		Res(int id_, float inp_) :id(id_), dist(inp_) {}
 		bool operator < (const Res& rhs) const {
 			return dist > rhs.dist;
 		}
@@ -116,7 +222,7 @@ namespace mf_alsh
 
 	class Query
 	{
-	private:
+		private:
 		// the parameter "c" in "c-ANN"
 		float c;
 		//which chunk is accessed
@@ -179,7 +285,7 @@ namespace mf_alsh
 		//}
 
 		float varphi(float x, float theta, Hash& hash);
-	public:
+		public:
 		// k-NN
 		int k;
 		// Indice of query point in dataset. Be equal to -1 if the query point isn't in the dataset.
@@ -209,7 +315,7 @@ namespace mf_alsh
 			std::vector<bool>& flag, int& num_res);
 		void siftF(Hash& hash, Preprocess& prep);
 		void knnF(Res* res_PQ, Hash& hash, Preprocess& prep, std::vector<int>** table, std::vector<bool>& flag_, int& size);
-	public:
+		public:
 		Query(int id, float c_, int k_, Hash& hash, Preprocess& prep, int ub_);
 
 		~Query();

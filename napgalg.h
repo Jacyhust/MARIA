@@ -316,14 +316,6 @@ namespace hnswlib
                     for (int n = 0; n < num_data; n++) {
                         // get inner product
                         float inner_product = cal_inner_product(query, dataset[n], dim_);
-                        //    0;
-                        //for (unsigned d = 0; d < dim_; d += 4) {
-                        //  // Used faster for loop to accelerate this method
-                        //    inner_product += query[d] * dataset[n][d] +
-                        //        query[d + 1] * dataset[n][d + 1] +
-                        //        query[d + 2] * dataset[n][d + 2] +
-                        //        query[d + 3] * dataset[n][d + 3];
-                        //}
                         nearest_neighbours.emplace(inner_product, n);
                     }
 
@@ -348,10 +340,12 @@ namespace hnswlib
                 }
 
                 // Get factor
-                float pp_mean = pp_sum / ((num_neighbours) * (num_neighbours - 1));
+                float pp_mean = 2 * pp_sum / ((num_neighbours) * (num_neighbours - 1));
                 float xp_mean = xp_sum / num_neighbours;
 
                 factors[i] = pp_mean / xp_mean;
+
+                std::cout << i << "," << factors[i] << std::endl;
             }
 
             for (int i = 0; i < num_subranges; i++) {
@@ -565,10 +559,17 @@ namespace hnswlib
             std::priority_queue<std::pair<dist_t, tableint>, std::vector<std::pair<dist_t, tableint>>, CompareByFirst>& top_candidates,
             const size_t M, float fac = 1.0f)
         {
+
             if (top_candidates.size() < M)
             {
                 return;
             }
+
+            // while (top_candidates.size() > M)
+            // {
+            //     top_candidates.pop();
+            // }
+            // return;
 
             std::priority_queue<std::pair<dist_t, tableint>> queue_closest;
             std::vector<std::pair<dist_t, tableint>> return_list;

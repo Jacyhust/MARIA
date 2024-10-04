@@ -7,17 +7,17 @@
 template <class Query>
 class Performance
 {
-public:
+	public:
 	//cost
-	int cost;
+	size_t cost;
 	//
 	std::vector<int> costs;
 	// times of query
 	int num;
 	//
-	float time_total=0.0f;
+	float time_total = 0.0f;
 	//
-	float time_hash=0.0f;
+	float time_hash = 0.0f;
 	//
 	float time_sift;
 	//
@@ -29,8 +29,8 @@ public:
 	//
 	float ratio;
 	// k-th ratio
-	float kRatio=0.0f;
-public:
+	float kRatio = 0.0f;
+	public:
 	Performance();
 	//update the Performance for each query
 	void update(Query& query, Preprocess& prep);
@@ -85,7 +85,7 @@ void Performance<Query>::update(Query& query, Preprocess& prep)
 		float rate = fabs(query.res[j].dist / prep.benchmark.innerproduct[query.qid][j]);
 		ratio += rate;
 
-		if(j==num0-1) kRatio+=rate;
+		if (j == num0 - 1) kRatio += rate;
 
 		set1.insert(query.res[j].id);
 		set2.insert((int)prep.benchmark.indice[query.qid][j]);
