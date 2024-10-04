@@ -184,7 +184,37 @@ inline float calInnerProductReverse(float* v1, float* v2, int dim) {
 // #include <fstream>
 // #include <iomanip>
 // #include <cstdio>
+
+#if defined(_WIN32)
+#include <windows.h>
+#include <psapi.h>
+#define NOMINMAX
+
+#undef max
+
+#undef min
+#elif defined(__unix__) || defined(__unix) || defined(unix) || (defined(__APPLE__) && defined(__MACH__))
+
 #include <unistd.h>
+#include <sys/resource.h>
+
+
+#if defined(__APPLE__) && defined(__MACH__)
+#include <mach/mach.h>
+
+#elif (defined(_AIX) || defined(__TOS__AIX__)) || (defined(__sun__) || defined(__sun) || defined(sun) && (defined(__SVR4) || defined(__svr4__)))
+#include <fcntl.h>
+#include <procfs.h>
+
+#elif defined(__linux__) || defined(__linux) || defined(linux) || defined(__gnu_linux__)
+
+#endif
+
+#else
+#error "Cannot define getPeakRSS( ) or getCurrentRSS( ) for an unknown OS."
+#endif
+
+
 /**
 * Returns the current resident set size (physical memory use) measured
 * in bytes, or zero if the value cannot be determined on this OS.
