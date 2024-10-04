@@ -557,10 +557,17 @@ namespace hnswlib
             std::priority_queue<std::pair<dist_t, tableint>, std::vector<std::pair<dist_t, tableint>>, CompareByFirst>& top_candidates,
             const size_t M, float fac = 1.0f)
         {
+
             if (top_candidates.size() < M)
             {
                 return;
             }
+
+            // while (top_candidates.size() > M)
+            // {
+            //     top_candidates.pop();
+            // }
+            // return;
 
             std::priority_queue<std::pair<dist_t, tableint>> queue_closest;
             std::vector<std::pair<dist_t, tableint>> return_list;

@@ -105,7 +105,7 @@ class myNADG {
 
     bool index_inited;
     bool ep_added;
-    bool normalize;
+    bool normalize = 0;
     int num_threads_default;
     hnswlib::labeltype cur_l;
     IpSpace* l2space = nullptr;
@@ -167,8 +167,8 @@ class myNADG {
         }
         cur_l = 0;
         const size_t seed = 100;
-        appr_alg = new nadg(l2space, maxElements, M, efConstruction, seed, dim, useNormFactor);
-
+        //appr_alg = new nadg(l2space, maxElements, M, efConstruction, seed, dim, useNormFactor);
+        appr_alg = new nadg(l2space, maxElements, M, efConstruction, seed, dim, 0);
         index_inited = true;
         ep_added = false;
         appr_alg->ef_ = default_ef;
@@ -258,9 +258,12 @@ class myNADG {
 
             if (normalize == false)
             {
+                lsh::progress_display pd(rows);
                 ParallelFor(start, rows, num_threads, [&](size_t row, size_t threadId) {
                     size_t id = ids.size() ? ids.at(row) : (cur_l + row);
-                    appr_alg->addPoint((float*)data[row], (size_t)id); });
+                    appr_alg->addPoint((float*)data[row], (size_t)id);
+                    ++pd;
+                    });
             }
             else
             {
@@ -337,7 +340,7 @@ class myNAPG {
 
     bool index_inited;
     bool ep_added;
-    bool normalize;
+    bool normalize = 0;
     int num_threads_default;
     hnswlib::labeltype cur_l;
     IpSpace* l2space = nullptr;
@@ -403,8 +406,8 @@ class myNAPG {
         }
         cur_l = 0;
         const size_t seed = 100;
-        appr_alg = new napg(l2space, maxElements, M, efConstruction, seed, dim, useNormFactor);
-
+        //appr_alg = new napg(l2space, maxElements, M, efConstruction, seed, dim, useNormFactor);
+        appr_alg = new napg(l2space, maxElements, M, efConstruction, seed, dim, 1);
         index_inited = true;
         ep_added = false;
         appr_alg->ef_ = default_ef;
@@ -486,7 +489,9 @@ class myNAPG {
                 // }
                 int row = 0;
                 ParallelFor(row, rows, num_threads, [&](size_t row, size_t threadId) {
-                    appr_alg->addData((float*)data[row], dim); });
+                    //appr_alg->addData((float*)data[row], dim);
+                    appr_alg->addData((float*)data[row], row);
+                    });
 
                 // Calculate norm ranged based factors
                 appr_alg->getNormRangeBasedFactors(data.val);
@@ -494,9 +499,12 @@ class myNAPG {
 
             if (normalize == false)
             {
+                lsh::progress_display pd(rows);
                 ParallelFor(start, rows, num_threads, [&](size_t row, size_t threadId) {
                     size_t id = ids.size() ? ids.at(row) : (cur_l + row);
-                    appr_alg->addPoint((float*)data[row], (size_t)id); });
+                    appr_alg->addPoint((float*)data[row], (size_t)id);
+                    ++pd;
+                    });
             }
             else
             {
