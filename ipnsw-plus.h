@@ -29,7 +29,7 @@ class ipNSW_plus {
     std::string alg_name = "ipNSW-plus";
 
     ipNSW_plus(Preprocess& prep, Parameter& param_, const std::string& file) {
-        reset(prep, param_, file);
+        reset(prep, param_, file, 1);
     }
 
     inline bool exists_test(const std::string& name) {
@@ -97,7 +97,7 @@ class ipNSW_plus {
     //     //return apg->maxM0_;
     // }
 
-    void buildIndex(hnsw* apg, const std::string& file, bool normalize) {
+    void buildIndex(hnsw*& apg, const std::string& file, bool normalize) {
         int M = 24;
         int efC = 80;
         ips = new IpSpace(dim);
@@ -161,23 +161,24 @@ class ipNSW_plus {
         //ef = 200;
 
         std::vector<unsigned int> eps;
-        {
-            int k_prime = 10;
+        eps.push_back(0);
+        //{
+        //    int k_prime = 10;
 
-            auto& appr_alg = apg_ang;
-            auto res = appr_alg->searchKnn(q->queryPoint, k_prime + ef);
+        //    auto& appr_alg = apg_ang;
+        //    auto res = appr_alg->searchKnn(q->queryPoint, k_prime + ef);
 
-            while (res.size() > k_prime) res.pop();
+        //    while (res.size() > k_prime) res.pop();
 
-            //eps.re()
-            while (!res.empty()) {
-                auto top = res.top();
-                eps.push_back(top.second);
-                res.pop();
-            }
-        }
+        //    //eps.re()
+        //    while (!res.empty()) {
+        //        auto top = res.top();
+        //        //eps.push_back(top.second);
+        //        res.pop();
+        //    }
+        //}
 
-        auto res = apg_ip->searchBaseLayerST<false>(eps, q->queryPoint, (size_t)(q->k));
+        auto res = apg_ip->searchBaseLayerST<false>(eps, q->queryPoint, (size_t)(q->k) + ef);
 
         while (!res.empty()) {
             auto top = res.top();
