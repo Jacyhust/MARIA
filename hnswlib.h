@@ -104,7 +104,7 @@ static float cal_inner_product_hnsw(const void* pVect1v, const void* pVect2v, co
     float* pVect2 = (float*)pVect2v;
     size_t qty = *((size_t*)qty_ptr);
 
-    return -cal_inner_product(pVect1, pVect2, qty);
+    return 1.0f - cal_inner_product(pVect1, pVect2, qty);
 }
 
 static float cal_L2sqr_hnsw(const void* pVect1v, const void* pVect2v, const void* qty_ptr) {

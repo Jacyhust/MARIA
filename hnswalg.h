@@ -367,7 +367,7 @@ namespace hnswlib {
         }
 
         template <bool has_deletions, bool collect_metrics = false>
-        std::priority_queue<std::pair<dist_t, tableint>, std::vector<std::pair<dist_t, tableint>>, CompareByFirst>
+        std::priority_queue<std::pair<dist_t, labeltype >>
             searchBaseLayerST(std::vector<tableint> eps, const void* data_point, size_t ef) const {
             VisitedList* vl = visited_list_pool_->getFreeVisitedList();
             vl_type* visited_array = vl->mass;
@@ -383,6 +383,57 @@ namespace hnswlib {
                 //lowerBound = dist;
                 top_candidates.emplace(dist, ep_id);
                 candidate_set.emplace(-dist, ep_id);
+
+                tableint current_node_id = ep_id;
+                int* data = (int*)get_linklist0(current_node_id);
+                size_t size = getListCount((linklistsizeint*)data);
+                //                bool cur_node_deleted = isMarkedDeleted(current_node_id);
+                if (collect_metrics) {
+                    metric_hops++;
+                    metric_distance_computations += size;
+                }
+
+#ifdef USE_SSE
+                _mm_prefetch((char*)(visited_array + *(data + 1)), _MM_HINT_T0);
+                _mm_prefetch((char*)(visited_array + *(data + 1) + 64), _MM_HINT_T0);
+                _mm_prefetch(data_level0_memory_ + (*(data + 1)) * size_data_per_element_ + offsetData_, _MM_HINT_T0);
+                _mm_prefetch((char*)(data + 2), _MM_HINT_T0);
+#endif
+
+                for (size_t j = 1; j <= size; j++) {
+                    int candidate_id = *(data + j);
+                    //                    if (candidate_id == 0) continue;
+#ifdef USE_SSE
+                    _mm_prefetch((char*)(visited_array + *(data + j + 1)), _MM_HINT_T0);
+                    _mm_prefetch(data_level0_memory_ + (*(data + j + 1)) * size_data_per_element_ + offsetData_,
+                        _MM_HINT_T0);////////////
+#endif
+                    if (!(visited_array[candidate_id] == visited_array_tag)) {
+
+                        visited_array[candidate_id] = visited_array_tag;
+
+                        char* currObj1 = (getDataByInternalId(candidate_id));
+                        dist_t dist = fstdistfunc_(data_point, currObj1, dist_func_param_);
+
+                        if (top_candidates.size() < ef || lowerBound > dist) {
+                            candidate_set.emplace(-dist, candidate_id);
+#ifdef USE_SSE
+                            _mm_prefetch(data_level0_memory_ + candidate_set.top().second * size_data_per_element_ +
+                                offsetLevel0_,///////////
+                                _MM_HINT_T0);////////////////////////
+#endif
+
+                            if (!has_deletions || !isMarkedDeleted(candidate_id))
+                                top_candidates.emplace(dist, candidate_id);
+
+                            if (top_candidates.size() > ef)
+                                top_candidates.pop();
+
+                            if (top_candidates.size() == ef)
+                                lowerBound = top_candidates.top().first;
+                        }
+                    }
+                }
             }
 
             if (top_candidates.size() == ef)
@@ -450,7 +501,15 @@ namespace hnswlib {
             }
 
             visited_list_pool_->releaseVisitedList(vl);
-            return top_candidates;
+
+            std::priority_queue<std::pair<dist_t, labeltype >> result;
+            while (top_candidates.size() > 0) {
+                std::pair<dist_t, tableint> rez = top_candidates.top();
+                result.push(std::pair<dist_t, labeltype>(rez.first, getExternalLabel(rez.second)));
+                top_candidates.pop();
+            }
+            return result;
+            //return top_candidates;
         }
 
         template <bool has_deletions, bool collect_metrics = false>

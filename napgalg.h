@@ -340,10 +340,12 @@ namespace hnswlib
                 }
 
                 // Get factor
-                float pp_mean = pp_sum / ((num_neighbours) * (num_neighbours - 1));
+                float pp_mean = 2 * pp_sum / ((num_neighbours) * (num_neighbours - 1));
                 float xp_mean = xp_sum / num_neighbours;
 
                 factors[i] = pp_mean / xp_mean;
+
+                std::cout << i << "," << factors[i] << std::endl;
             }
 
             for (int i = 0; i < num_subranges; i++) {

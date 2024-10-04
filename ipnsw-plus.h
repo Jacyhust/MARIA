@@ -69,7 +69,7 @@ class ipNSW_plus {
         }
         else {
             //the indexes have been built now, delete data array for saving memory.
-            delete[] prep.data.base;
+            //delete[] prep.data.base;
 
             std::cout << "Loading index from " << index_ang << ":\n";
             float mem = (float)getCurrentRSS() / (1024 * 1024);
@@ -158,28 +158,29 @@ class ipNSW_plus {
         lsh::timer timer;
         timer.restart();
         int ef = apg_ip->ef_;
-        //ef = 200;
+        ef = 200;
 
         std::vector<unsigned int> eps;
-        eps.push_back(0);
-        //{
-        //    int k_prime = 10;
+        //eps.push_back(0);
+        {
+            int k_prime = 10;
 
-        //    auto& appr_alg = apg_ang;
-        //    auto res = appr_alg->searchKnn(q->queryPoint, k_prime + ef);
+            auto& appr_alg = apg_ang;
+            auto res = appr_alg->searchKnn(q->queryPoint, k_prime + ef);
 
-        //    while (res.size() > k_prime) res.pop();
+            while (res.size() > k_prime) res.pop();
 
-        //    //eps.re()
-        //    while (!res.empty()) {
-        //        auto top = res.top();
-        //        //eps.push_back(top.second);
-        //        res.pop();
-        //    }
-        //}
+            //eps.re()
+            while (!res.empty()) {
+                auto top = res.top();
+                eps.push_back(top.second);
+                res.pop();
+            }
+        }
 
         auto res = apg_ip->searchBaseLayerST<false>(eps, q->queryPoint, (size_t)(q->k) + ef);
-
+        //auto res = apg_ip->searchBaseLayerST<false>(0, q->queryPoint, (size_t)(q->k) + ef);
+        //auto res = apg_ip->searchKnn(q->queryPoint, (size_t)(q->k) + ef);
         while (!res.empty()) {
             auto top = res.top();
             res.pop();
@@ -190,7 +191,7 @@ class ipNSW_plus {
         while (!q->resHeap.empty()) {
             auto top = q->resHeap.top();
             q->resHeap.pop();
-            q->res.emplace_back(top.id, -top.dist);
+            q->res.emplace_back(top.id, 1.0f - top.dist);
         }
         std::reverse(q->res.begin(), q->res.end());
         q->time_total = timer.elapsed();
