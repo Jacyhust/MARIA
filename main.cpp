@@ -107,11 +107,11 @@ int main(int argc, char const* argv[])
 	myNAPG napg(prep.data, 24, 80, 1000, index_fold + (argvStr[2]) + "_napg");
 	res.push_back(Alg0_maria(napg, c, 100, k, L, K, prep));
 
-	myHNSW hnsw(prep, param, index_fold + (argvStr[2]) + "_ipnsw", parti, data_fold2 + "MyfunctionXTheta.data");
-	res.push_back(Alg0_maria(hnsw, c, 100, k, L, K, prep));
+	// myHNSW hnsw(prep, param, index_fold + (argvStr[2]) + "_ipnsw", parti, data_fold2 + "MyfunctionXTheta.data");
+	// res.push_back(Alg0_maria(hnsw, c, 100, k, L, K, prep));
 
-	ipNSW_plus plus(prep, param, index_fold + (argvStr[2]) + "_plus");
-	res.push_back(Alg0_maria(plus, c, 100, k, L, K, prep));
+	// ipNSW_plus plus(prep, param, index_fold + (argvStr[2]) + "_plus");
+	// res.push_back(Alg0_maria(plus, c, 100, k, L, K, prep));
 
 	std::vector<int> ms = { 0,100,200,400,800,1200,1600,3200,6400 };
 	saveAndShow(c, k, dataset, res);
