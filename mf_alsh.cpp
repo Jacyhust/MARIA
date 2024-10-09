@@ -348,7 +348,7 @@ void Query::siftF(Hash& hash, Preprocess& prep)
 			knnF(res_PQ, hash, prep, hash.myIndexes[t], flag_, size);
 		}
 
-		if (size == UB) inp_LB = res_PQ[0].dist;
+		if (size >= UB) inp_LB = res_PQ[0].dist;
 	}
 
 	res.clear();
@@ -414,7 +414,7 @@ void Query::knnF(Res* res_PQ,
 	int MaxNum = hash.parti.nums[chunks]
 		* 1.0
 		;
-	float beta = 1.0f;
+	float beta = 0.1f;
 
 	//cnt = 2 * MaxNum;
 	while (cnt < (int)(beta * MaxNum)

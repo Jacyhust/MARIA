@@ -42,8 +42,8 @@ class ipNSW_plus {
         N = param_.N;
         dim = param_.dim;
         data = prep.data;
-        index_ip = file + "_ip";
-        index_ang = file + "_ang";
+        index_ip = file;
+        index_ang = file + "_plus_ang";
         norms = prep.norms;
 
         if (!(isbuilt && exists_test(index_ip))) {
@@ -100,6 +100,10 @@ class ipNSW_plus {
     void buildIndex(hnsw*& apg, const std::string& file, bool normalize) {
         int M = 24;
         int efC = 80;
+        if (normalize) {
+            M = 10;
+            efC = 32;
+        }
         ips = new IpSpace(dim);
         //apg = new hnsw[parti.numChunks];
         size_t report_every = N / 20;
@@ -162,25 +166,25 @@ class ipNSW_plus {
 
         std::vector<unsigned int> eps;
         //eps.push_back(0);
-        {
-            int k_prime = 10;
+        int k_prime = 10;
 
-            auto& appr_alg = apg_ang;
-            auto res = appr_alg->searchKnn(q->queryPoint, k_prime + ef);
+        auto& appr_alg = apg_ang;
+        auto res = appr_alg->searchKnn(q->queryPoint, k_prime + ef / 10);
 
-            while (res.size() > k_prime) res.pop();
+        while (res.size() > k_prime) res.pop();
+        //while (res.size() > 1) res.pop();
 
-            //eps.re()
-            while (!res.empty()) {
-                auto top = res.top();
-                eps.push_back(top.second);
-                res.pop();
-            }
+        //eps.re()
+        while (!res.empty()) {
+            auto top = res.top();
+            eps.push_back(top.second);
+            res.pop();
         }
 
-        auto res = apg_ip->searchBaseLayerST<false>(eps, q->queryPoint, (size_t)(q->k) + ef);
-        //auto res = apg_ip->searchBaseLayerST<false>(0, q->queryPoint, (size_t)(q->k) + ef);
-        //auto res = apg_ip->searchKnn(q->queryPoint, (size_t)(q->k) + ef);
+        res = apg_ip->searchBaseLayerST<false>(eps, q->queryPoint, (size_t)(q->k) + ef);
+        // auto res = apg_ip->searchBaseLayerST<false>(0, q->queryPoint, (size_t)(q->k) + ef);
+        res = apg_ip->searchKnn(q->queryPoint, (size_t)(q->k) + ef);
+
         while (!res.empty()) {
             auto top = res.top();
             res.pop();

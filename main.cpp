@@ -54,7 +54,7 @@ int main(int argc, char const* argv[])
 	m = 1000;
 	L = 5;
 	K = 12;
-	c = 0.8;
+	c = 0.3;
 
 	int minsize_cl = 500;
 	int num_cl = 10;
@@ -66,7 +66,7 @@ int main(int argc, char const* argv[])
 	Partition parti(c, prep);
 	std::cout << "Partition time: " << timer.elapsed() << " s.\n" << std::endl;
 
-	//mf_alsh::Hash mf(prep, param, index_fold + (argvStr[2]) + "_mf", parti, data_fold2 + "MyfunctionXTheta.data");
+
 
 	//solidAnglePartition sap(prep, param, index_fold + (argvStr[2]), parti, data_fold2 + "MyfunctionXTheta.data");
 	//myHNSW hnsw(prep, param, index_fold + (argvStr[2]) + "_ipnsw", parti, data_fold2 + "MyfunctionXTheta.data");
@@ -100,7 +100,7 @@ int main(int argc, char const* argv[])
 	//res.push_back(Alg0_maria(mariaV5, c, 100, k, L, K, prep));
 	//res.push_back(Alg0_maria(hnsw, c, 100, k, L, K, prep));
 
-	//res.push_back(Alg0_mfalsh(mf, c, m, k, L, K, prep));
+
 
 	//res.push_back(Alg0_maria(hnsw, c, 100, k, L, K, prep));
 
@@ -110,8 +110,17 @@ int main(int argc, char const* argv[])
 	myHNSW hnsw(prep, param, index_fold + (argvStr[2]) + "_ipnsw", parti, data_fold2 + "MyfunctionXTheta.data");
 	res.push_back(Alg0_maria(hnsw, c, 100, k, L, K, prep));
 
-	// ipNSW_plus plus(prep, param, index_fold + (argvStr[2]) + "_plus");
-	// res.push_back(Alg0_maria(plus, c, 100, k, L, K, prep));
+	maria maria(prep, param, index_fold + (argvStr[2]), parti, data_fold2 + "MyfunctionXTheta.data");
+	res.push_back(Alg0_maria(maria, c, 100, k, L, K, prep));
+
+	mf_alsh::Hash mf(prep, param, index_fold + (argvStr[2]) + "_mf", parti, data_fold2 + "MyfunctionXTheta.data");
+	res.push_back(Alg0_mfalsh(mf, c, m, k, L, K, prep));
+
+	myHNSW hnsw(prep, param, index_fold + (argvStr[2]) + "_ipnsw", parti, data_fold2 + "MyfunctionXTheta.data");
+	res.push_back(Alg0_maria(hnsw, c, 100, k, L, K, prep));
+
+	ipNSW_plus plus(prep, param, index_fold + (argvStr[2]) + "_ipnsw");
+	res.push_back(Alg0_maria(plus, c, 100, k, L, K, prep));
 
 	std::vector<int> ms = { 0,100,200,400,800,1200,1600,3200,6400 };
 	saveAndShow(c, k, dataset, res);
