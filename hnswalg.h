@@ -384,6 +384,8 @@ namespace hnswlib {
                 top_candidates.emplace(dist, ep_id);
                 candidate_set.emplace(-dist, ep_id);
 
+                //continue;
+
                 tableint current_node_id = ep_id;
                 int* data = (int*)get_linklist0(current_node_id);
                 size_t size = getListCount((linklistsizeint*)data);
@@ -426,7 +428,7 @@ namespace hnswlib {
                             if (!has_deletions || !isMarkedDeleted(candidate_id))
                                 top_candidates.emplace(dist, candidate_id);
 
-                            if (top_candidates.size() > ef)
+                            while (top_candidates.size() > ef)
                                 top_candidates.pop();
 
                             if (top_candidates.size() == ef)
@@ -439,7 +441,8 @@ namespace hnswlib {
             if (top_candidates.size() == ef)
                 lowerBound = top_candidates.top().first;
 
-            while (!candidate_set.empty()) {
+
+            while (1 && !candidate_set.empty()) {
 
                 std::pair<dist_t, tableint> current_node_pair = candidate_set.top();
 
@@ -490,7 +493,7 @@ namespace hnswlib {
                             if (!has_deletions || !isMarkedDeleted(candidate_id))
                                 top_candidates.emplace(dist, candidate_id);
 
-                            if (top_candidates.size() > ef)
+                            while (top_candidates.size() > ef)
                                 top_candidates.pop();
 
                             if (top_candidates.size() == ef)
