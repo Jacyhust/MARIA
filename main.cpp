@@ -107,8 +107,6 @@ int main(int argc, char const* argv[])
 	// myNAPG napg(prep.data, 24, 80, 1000, index_fold + (argvStr[2]) + "_napg");
 	// res.push_back(Alg0_maria(napg, c, 100, k, L, K, prep));
 
-	myHNSW hnsw(prep, param, index_fold + (argvStr[2]) + "_ipnsw", parti, data_fold2 + "MyfunctionXTheta.data");
-	res.push_back(Alg0_maria(hnsw, c, 100, k, L, K, prep));
 
 	maria maria(prep, param, index_fold + (argvStr[2]), parti, data_fold2 + "MyfunctionXTheta.data");
 	res.push_back(Alg0_maria(maria, c, 100, k, L, K, prep));

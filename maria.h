@@ -255,7 +255,7 @@ class myHNSW {
 			apg->addPoint((void*)(data0), (size_t)j2);
 		}
 
-		std::cout << " Finish building HNSW\n";
+		std::cout << " Finish building ip-NSW\n";
 
 		indexing_time = timer_total.elapsed();
 		apg->saveIndex(index_file);
