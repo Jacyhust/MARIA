@@ -64,6 +64,7 @@ void saveAndShow(float c, int k, std::string& dataset, std::vector<resOutput>& r
 		<< std::setw(12) << "c"
 		<< std::setw(12) << "L"
 		<< std::setw(12) << "K"
+		<< std::setw(12) << "QPS"
 		<< std::setw(12) << "Time"
 		<< std::setw(12) << "Recall"
 		<< std::setw(12) << "Ratio"
@@ -75,6 +76,7 @@ void saveAndShow(float c, int k, std::string& dataset, std::vector<resOutput>& r
 			<< std::setw(12) << res[i].c
 			<< std::setw(12) << res[i].L
 			<< std::setw(12) << res[i].K
+			<< std::setw(12) << res[i].qps
 			<< std::setw(12) << res[i].time
 			<< std::setw(12) << res[i].recall
 			<< std::setw(12) << res[i].ratio

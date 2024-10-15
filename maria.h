@@ -170,7 +170,7 @@ class myHNSW {
 		return f.good();
 	}
 
-	void reset(Data& data_, Parameter& param_, const std::string& file, bool isbuilt = true) {
+	void reset(Data& data_, Parameter& param_, const std::string& file, bool isbuilt = 1) {
 		N = param_.N;
 		dim = param_.dim;
 		data = data_;
