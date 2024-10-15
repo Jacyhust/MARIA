@@ -59,12 +59,13 @@ inline resOutput Alg0_maria(mariaVx& maria, float c_, int m_, int k_, int L_, in
 
 	Performance<queryN> perform;
 
-	int t = 100;
+	int t = 256 * 160 / Qnum;
 
 	size_t cost1 = _G_COST;
 	int nq = t * Qnum;
 
 	std::vector<queryN> qs;
+	// #pragma omp parallel for schedule(dynamic)
 	for (int j = 0; j < nq; j++) {
 		qs.emplace_back(j / t, c_, k_, prep, m_);
 	}
@@ -72,7 +73,8 @@ inline resOutput Alg0_maria(mariaVx& maria, float c_, int m_, int k_, int L_, in
 	lsh::progress_display pd(nq);
 
 	lsh::timer timer1;
-#pragma omp parallel for schedule(dynamic)
+
+#pragma omp parallel for schedule(dynamic,256)
 	for (int j = 0; j < nq; j++) {
 		maria.knn(&(qs[j]));
 		++pd;

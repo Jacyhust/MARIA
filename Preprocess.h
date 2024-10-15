@@ -305,6 +305,8 @@ class queryN
 		//myData = prep.data.val;
 		dim = prep.data.dim + 1;
 		queryPoint = prep.queries[id];
+		// queryPoint = new float[dim];
+		// memcpy(queryPoint, prep.queries[id], sizeof(float) * dim);
 
 		norm = sqrt(cal_inner_product(queryPoint, queryPoint, dim));
 		//search();
