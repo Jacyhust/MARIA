@@ -7,9 +7,11 @@
 #include <vector>
 #include <queue>
 #include <cfloat>
+#include <fstream>
+
 class Preprocess
 {
-public:
+	public:
 	Data data;
 	Data queries;
 	float* norms = nullptr;
@@ -17,10 +19,133 @@ public:
 	float MaxLen;
 	std::string data_file;
 	std::string ben_file;
-public:
-	Preprocess(const std::string& path, const std::string& ben_file_);
-	void load_data(const std::string& path);
-	void load_fbin(const std::string& path, Data& data);
+	public:
+	// Preprocess(const std::string& path, const std::string& ben_file_);
+	// void load_data(const std::string& path);
+	// void load_fbin(const std::string& path, Data& data);
+
+	Preprocess(const std::string& path, const std::string& ben_file_, int varied_n = 0) {
+		//for_varied_n = varied_n;
+		lsh::timer timer;
+		std::cout << "LOADING DATA..." << std::endl;
+		timer.restart();
+		if (path.find("deep1B") != std::string::npos || path.find("yandex") != std::string::npos) {
+			load_fbin(path + "_query.fbin", queries);
+			load_fbin(path + ".fbin", data, varied_n);
+
+		}
+		else load_data(path, varied_n);
+		std::cout << "LOADING TIME: " << timer.elapsed() << "s." << std::endl << std::endl;
+		cal_SquareLen();
+
+		data_file = path;
+		ben_file = ben_file_;
+		if (varied_n > 0) ben_file += std::to_string(varied_n);
+		ben_create();
+	}
+
+	void load_data(const std::string& path, int varied_n = 0) {
+		std::string file = path + ".data_new";
+		std::ifstream in(file.c_str(), std::ios::binary);
+		if (!in) {
+			printf("Fail to open the file!\n");
+			exit(-1);
+		}
+
+
+
+		unsigned int header[3] = {};
+		assert(sizeof header == 3 * 4);
+		in.read((char*)header, sizeof(header));
+		assert(header[1] != 0);
+		data.N = header[1] - 200;
+		data.dim = header[2];
+
+		while (varied_n > 0) {
+			data.N /= 10;
+			varied_n--;
+		}
+
+		queries.N = 200;
+		queries.dim = data.dim;
+
+		std::cout << "Load from new file: " << file << "\n";
+		std::cout << "Nq =  " << queries.N << "\n";
+		std::cout << "N  =  " << data.N << "\n";
+		std::cout << "dim=  " << data.dim << "\n\n";
+
+		queries.val = new float* [queries.N];
+		data.val = new float* [data.N];
+
+		//data.offset=data.dim+1;
+		data.base = new float[(size_t)data.N * data.dim];
+		queries.base = new float[(size_t)queries.N * queries.dim];
+
+		for (size_t i = 0; i < queries.N; ++i) {
+			// queries.val[i] = new float[queries.dim + 1];
+			// in.read((char*)queries.val[i], sizeof(float) * header[2]);
+			// queries.val[i][queries.dim - 1] = 0.0f;
+
+			queries.val[i] = queries.base + i * queries.dim;
+			in.read((char*)queries.val[i], sizeof(float) * header[2]);
+		}
+
+		for (size_t i = 0; i < data.N; ++i) {
+			// data.val[i] = new float[data.dim + 1];
+			// in.read((char*)data.val[i], sizeof(float) * header[2]);
+			// data.val[i][data.dim - 1] = 0.0f;
+
+			data.val[i] = data.base + i * data.dim;
+			in.read((char*)data.val[i], sizeof(float) * header[2]);
+		}
+
+		std::cout << "Finish loading! " << "\n";
+
+		in.close();
+	}
+
+	void load_fbin(const std::string& path, Data& data, int varied_n = 0) {
+		std::string file = path;
+		std::ifstream in(file.c_str(), std::ios::binary);
+		if (!in) {
+			printf("Fail to open the file: %s\n", file.c_str());
+			exit(-1);
+		}
+
+		unsigned int header[2] = {};
+		assert(sizeof header == 2 * 4);
+		in.read((char*)header, sizeof(header));
+		assert(header[0] != 0);
+		data.N = header[0];
+		data.dim = header[1];
+
+		while (varied_n > 0) {
+			data.N /= 10;
+			varied_n--;
+		}
+		size_t size = ((size_t)data.N) * data.dim;
+		std::cout << "Load from fbin: " << file << "\n";
+		std::cout << "N   =  " << data.N << "\n";
+		std::cout << "dim =  " << data.dim << "\n";
+		std::cout << "size=  " << size << "\n\n";
+
+		data.base = new float[size];
+		data.val = new float* [data.N];
+		for (size_t i = 0; i < data.N; ++i) {
+			data.val[i] = data.base + i * data.dim;
+		}
+
+		in.read((char*)data.base, sizeof(float) * size);
+		// #pragma omp parallel for schedule(dynamic, 256)
+		// 		for (int i = 0; i < data.N; ++i) {
+		// 			in.read((char*)data.val[i], sizeof(float) * data.dim);
+		// 		}
+
+		std::cout << "Finish Reading File! " << "\n";
+		in.close();
+	}
+
+
 	void cal_SquareLen();
 	void ben_make();
 	void ben_save();
@@ -42,11 +167,11 @@ struct Dist_id
 
 class Partition
 {
-private:
+	private:
 	float ratio;
 	void make_chunks_fargo(Preprocess& prep);
 	void make_chunks_maria(Preprocess& prep);
-public:
+	public:
 	int numChunks;
 	std::vector<float> MaxLen;
 
@@ -57,7 +182,7 @@ public:
 	//The data size of each chunks
 	//nums[i]=j: i-th parti has j points
 	std::vector<int> nums;
-	
+
 	//The buckets by parti;
 	//EachParti[i][j]=k: k-th point is the j-th point in i-th parti
 	std::vector<std::vector<int>> EachParti;
@@ -74,7 +199,7 @@ public:
 
 class Parameter //N,dim,S, L, K, M, W;
 {
-public:
+	public:
 	int N;
 	int dim;
 	// Number of hash functions
@@ -122,7 +247,7 @@ struct Res//the result of knns
 
 class queryN
 {
-public:
+	public:
 	// the parameter "c" in "c-ANN"
 	float c;
 	//which chunk is accessed
@@ -144,7 +269,7 @@ public:
 
 	//std::vector<int> keys;
 
-public:
+	public:
 	// k-NN
 	unsigned k = 1;
 	// Indice of query point in dataset. Be equal to -1 if the query point isn't in the dataset.
@@ -171,7 +296,7 @@ public:
 	// query result:<indice of ANN,distance of ANN>
 	std::vector<Res> res;
 
-public:
+	public:
 	queryN(unsigned id, float c_, unsigned k_, Preprocess& prep, float beta_) {
 		qid = id;
 		c = c_;
@@ -187,8 +312,8 @@ public:
 
 	//void search();
 
-	~queryN() { 
-		delete hashval; 
+	~queryN() {
+		delete hashval;
 		//delete queryPoint;
 	}
 };

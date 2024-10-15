@@ -414,7 +414,7 @@ void Query::knnF(Res* res_PQ,
 	int MaxNum = hash.parti.nums[chunks]
 		* 1.0
 		;
-	float beta = 0.1f;
+	float beta = 0.2f;
 
 	//cnt = 2 * MaxNum;
 	while (cnt < (int)(beta * MaxNum)

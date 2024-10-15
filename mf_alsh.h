@@ -317,7 +317,7 @@ namespace mf_alsh
 		void knnF(Res* res_PQ, Hash& hash, Preprocess& prep, std::vector<int>** table, std::vector<bool>& flag_, int& size);
 		public:
 		Query(int id, float c_, int k_, Hash& hash, Preprocess& prep, int ub_);
-
+		Query() = default;
 		~Query();
 	};
 }
