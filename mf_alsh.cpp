@@ -378,7 +378,7 @@ void Query::knnF(Res* res_PQ,
 	int cnt = 0;
 	float inpK = -1.0f;
 	if (size == UB) inpK = res_PQ[0].dist;
-	float Max_inp = this->norm * sqrt(hash.parti.MaxLen[chunks]);
+	float Max_inp = this->norm * (hash.parti.MaxLen[chunks]);
 
 	for (int i = 0; i < hash.L; i++) {
 		for (auto& x : table[i][keys[i]]) {
@@ -414,7 +414,7 @@ void Query::knnF(Res* res_PQ,
 	int MaxNum = hash.parti.nums[chunks]
 		* 1.0
 		;
-	float beta = 0.2f;
+	float beta = 1.0f;
 
 	//cnt = 2 * MaxNum;
 	while (cnt < (int)(beta * MaxNum)

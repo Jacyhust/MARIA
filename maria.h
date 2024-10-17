@@ -156,7 +156,7 @@ class myHNSW {
 	//std::string index_file;
 	std::string alg_name = "hnsw";
 
-	myHNSW(Preprocess& prep_, Parameter& param_, const std::string& file, Partition& part_, const std::string& funtable) {
+	myHNSW(Preprocess& prep_, Parameter& param_, const std::string& file, const std::string& funtable) {
 		reset(prep_.data, param_, file);
 	}
 
@@ -266,7 +266,7 @@ class myHNSW {
 		lsh::timer timer;
 		timer.restart();
 		int ef = apg->ef_;
-		ef = 200;
+		//ef = 200;
 		auto& appr_alg = apg;
 		auto id = 0;
 		auto res = appr_alg->searchKnn(q->queryPoint, q->k + ef);
