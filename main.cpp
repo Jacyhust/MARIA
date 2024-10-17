@@ -65,7 +65,7 @@ int main(int argc, char const* argv[])
 
 	lsh::timer timer;
 	Partition parti(c, prep);
-	std::cout << "Partition time: " << timer.elapsed() << " s.\n" << std::endl;
+	// std::cout << "Partition time: " << timer.elapsed() << " s.\n" << std::endl;
 
 	if (varied_n > 0) dataset += std::to_string(varied_n);
 	argvStr[2] = (dataset + ".index");
@@ -105,35 +105,50 @@ int main(int argc, char const* argv[])
 
 
 	//res.push_back(Alg0_maria(hnsw, c, 100, k, L, K, prep));
-	{
-		myNAPG napg(prep.data, 24, 80, 1000, index_fold + (argvStr[2]) + "_napg");
-		res.push_back(Alg0_maria(napg, c, 100, k, L, K, prep));
-	}
+
 
 
 	// maria maria(prep, param, index_fold + (argvStr[2]), parti, data_fold2 + "MyfunctionXTheta.data");
 	// res.push_back(Alg0_maria(maria, c, 100, k, L, K, prep));
 
-	{
-		mf_alsh::Hash mf(prep, param, index_fold + (argvStr[2]) + "_mf", parti, data_fold2 + "MyfunctionXTheta.data");
-		res.push_back(Alg0_mfalsh(mf, c, m, k, L, K, prep));
+	std::vector<int> efs = { 0,10,20,30,40,50,75,100,150,200,250,300 };
+
+	// {
+	// 	mf_alsh::Hash mf(prep, param, index_fold + (argvStr[2]) + "_mf", parti, data_fold2 + "MyfunctionXTheta.data");
+	// 	std::vector<int> ms = { 0,100,200,400,800,1200,1600,3200,6400 };
+	// 	for (auto& m : ms)
+	// 		res.push_back(Alg0_mfalsh(mf, c, m, k, L, K, prep));
+	// }
+
+	// 
+	// {
+	// 	myHNSW hnsw(prep, param, index_fold + (argvStr[2]) + "_ipnsw", data_fold2 + "MyfunctionXTheta.data");
+	// 	for (auto& ef : efs) {
+	// 		hnsw.setEf(ef);
+	// 		res.push_back(Alg0_maria(hnsw, c, 100, k, L, K, prep));
+	// 	}
+
+	// }
+
+
+	// if (prep.data.N < 1e9) {
+	// 	ipNSW_plus plus(prep, param, index_fold + (argvStr[2]) + "_ipnsw");
+	// 	for (auto& ef : efs) {
+	// 		plus.setEf(ef);
+	// 		res.push_back(Alg0_maria(plus, c, 100, k, L, K, prep));
+	// 	}
+	// 	//res.push_back(Alg0_maria(plus, c, 100, k, L, K, prep));
+	// }
+
+	if (1) {
+		myNAPG napg(prep.data, 24, 80, 1000, index_fold + (argvStr[2]) + "_napg");
+		for (auto& ef : efs) {
+			napg.setEf(ef);
+			res.push_back(Alg0_maria(napg, c, 100, k, L, K, prep));
+		}
+		//res.push_back(Alg0_maria(napg, c, 100, k, L, K, prep));
 	}
 
-
-	{
-		myHNSW hnsw(prep, param, index_fold + (argvStr[2]) + "_ipnsw", parti, data_fold2 + "MyfunctionXTheta.data");
-		hnsw.setEf(200);
-		res.push_back(Alg0_maria(hnsw, c, 100, k, L, K, prep));
-	}
-
-
-	if (prep.data.N < 1e9) {
-		ipNSW_plus plus(prep, param, index_fold + (argvStr[2]) + "_ipnsw");
-		res.push_back(Alg0_maria(plus, c, 100, k, L, K, prep));
-	}
-
-
-	std::vector<int> ms = { 0,100,200,400,800,1200,1600,3200,6400 };
 	saveAndShow(c, k, dataset, res);
 
 	return 0;

@@ -53,7 +53,6 @@ class Preprocess
 		}
 
 
-
 		unsigned int header[3] = {};
 		assert(sizeof header == 3 * 4);
 		in.read((char*)header, sizeof(header));
@@ -128,6 +127,8 @@ class Preprocess
 		std::cout << "N   =  " << data.N << "\n";
 		std::cout << "dim =  " << data.dim << "\n";
 		std::cout << "size=  " << size << "\n\n";
+
+		if (data.N >= 1e9) return;
 
 		data.base = new float[size];
 		data.val = new float* [data.N];

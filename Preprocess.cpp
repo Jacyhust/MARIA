@@ -119,6 +119,7 @@
 
 void Preprocess::cal_SquareLen()
 {
+	if (data.base == nullptr) return;
 	norms = new float[data.N];
 	for (int i = 0; i < data.N; ++i) {
 		norms[i] = sqrt(cal_inner_product(data.val[i], data.val[i], data.dim));

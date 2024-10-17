@@ -162,7 +162,7 @@ class ipNSW_plus {
         lsh::timer timer;
         timer.restart();
         int ef = apg_ip->ef_;
-        ef = 200;
+        //ef = 200;
 
         std::vector<unsigned int> eps;
         //eps.push_back(0);
