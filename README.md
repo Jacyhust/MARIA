@@ -1,4 +1,4 @@
-# The Source Code for MARIA (Submitted to SIGMOD 2025 Round 4)
+# The Source Code for MARIA (Submitted to PVLDB 2025)
 -----------------------------------------------------------------------------------------------------------------
 ## Introduction
 This is a source code for the algorithm described in the paper **MARIA: Towards Efficient Approximate Maximum Inner Product Search on Large-Scale Vector Datasets**. We call it as **maria** project.
